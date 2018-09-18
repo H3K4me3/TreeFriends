@@ -31,7 +31,7 @@ stopifnot(file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))
 
 # Create index
 if (!file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz.tbi"))
-    indexTabix("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz", format = "vcf")
+    Rsamtools::indexTabix("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz", format = "vcf")
 
 # Check chain files
 # The chain files are downloaded from ftp://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/

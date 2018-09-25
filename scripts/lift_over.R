@@ -91,7 +91,7 @@ bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
         gr <- slidingRanges[i]
         gr <- read_vcf(gr)
         gr <- lift_over(gr)
-        saveRDS(here(sprintf("lift_over_results/%04d_%s.rds", i,
+        saveRDS(gr, here(sprintf("lift_over_results/%04d_%s.rds", i,
                              format(Sys.time(), "%Y-%m-%d_%H:%M"))))
         return(TRUE)
     }

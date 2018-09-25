@@ -11,7 +11,7 @@ library(BSgenome.GGorilla.UCSC.gorGor5)
 library(BSgenome.PAbelii.UCSC.ponAbe2)
 
 # In order to get snp id
-library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
+#library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
 
 library(BiocParallel)
 

@@ -3,6 +3,14 @@ library(here)
 
 setwd(here())
 
+### dbSNP package from Bioconductor  #####-------------------------------
+
+if (!requireNamespace('SNPlocs.Hsapiens.dbSNP151.GRCh38')) {
+    source("https://bioconductor.org/biocLite.R")
+    biocLite("SNPlocs.Hsapiens.dbSNP151.GRCh38")
+}
+
+BiocInstaller::biocLite("SNPlocs.Hsapiens.dbSNP151.GRCh38")
 ### BSgenome packages from Bioconductor #####----------------------------
 
 if (!requireNamespace('BSgenome.Hsapiens.UCSC.hg38')) {

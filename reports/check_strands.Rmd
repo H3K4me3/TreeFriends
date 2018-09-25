@@ -72,8 +72,8 @@ queryString <- function(grl, bsgenome) {
 ```{r}
 rg$loc.panTro5 <- lift(rg, here("raw_data/chainfiles/hg38ToPanTro5.over.chain"))
 rg$dna.panTro5 <- queryString(rg$loc.panTro5, BSgenome.Ptroglodytes.UCSC.panTro5)
-#rg$loc.gorGor5 <- lift(rg, here("raw_data/chainfiles/hg38ToGorGor5.over.chain"))
-#rg$dna.gorGor5 <- queryString(rg$loc.panTro5, BSgenome.GGorilla.UCSC.gorGor5)
+rg$loc.gorGor5 <- lift(rg, here("raw_data/chainfiles/hg38ToGorGor5.over.chain"))
+rg$dna.gorGor5 <- queryString(rg$loc.gorGor5, BSgenome.GGorilla.UCSC.gorGor5)
 rg$loc.ponAbe2 <- lift(rg, here("raw_data/chainfiles/hg38ToPonAbe2.over.chain"))
 rg$dna.ponAbe2 <- queryString(rg$loc.ponAbe2, BSgenome.PAbelii.UCSC.ponAbe2)
 ```
@@ -83,16 +83,19 @@ rg$dna.ponAbe2 <- queryString(rg$loc.ponAbe2, BSgenome.PAbelii.UCSC.ponAbe2)
 ```{r}
 # TMP: trim the range
 
-rg_flat <- rg[(lengths(rg$dna.panTro5) == 1) & (lengths(rg$dna.ponAbe2) == 1)]
-lengths(rg_flat$dna.panTro5) %>% table
+rg_flat <- rg[(lengths(rg$dna.panTro5) == 1) & (lengths(rg$dna.ponAbe2) == 1) &
+              (lengths(rg$dna.gorGor5) == 1)]
+table(lengths(rg_flat$dna.panTro5))
 rg_flat$dna.panTro5 <- unlist(rg_flat$dna.panTro5)
 rg_flat$dna.ponAbe2 <- unlist(rg_flat$dna.ponAbe2)
+rg_flat$dna.gorGor5 <- unlist(rg_flat$dna.gorGor5)
 rg_flat
 
 data <- tibble::data_frame(
     pos = start(rg_flat),
     match.panTro5 =  rg_flat$REF == rg_flat$dna.panTro5,
-    match.ponAde2 =  rg_flat$REF == rg_flat$dna.ponAbe2
+    match.ponAde2 =  rg_flat$REF == rg_flat$dna.ponAbe2,
+    match.gorGor5 =  rg_flat$REF == rg_flat$dna.gorGor5
     #consit.ancestor =  rg_flat$dna.panTro5 == rg_flat$dna.ponAbe2
 )
 data

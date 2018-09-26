@@ -1,0 +1,41 @@
+---
+title: "Interpreting One-to-many Liftover Results"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+The implementation of `rtracklayer::liftOver` and UCSC liftover tool is different.
+See https://support.bioconductor.org/p/45159/.
+
+The following is quoted from the UCSC Genome Browser mailing list (https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/ffskDdFf6gA) as a comparision
+between liftOver and pslMap.
+
+> liftOver maps the start and end positions independently, so if there is a rearrangement between the two sequences, the number of bases in the region can change dramatically. pslMap forces a block structure on the alignment so the number of bases in the alignment is the same in both sequences (though there may be very large "introns", and inversions and translocations will cause blocks to be dropped because they aren't in the same order and orientation any more).
+>
+> I prefer pslMap because it's a base to base mapping. liftOver is useful if you just want to know where the same region is in a
+>
+> different assembly of the same individual which presumably isn't rearranged with itself but may have inserted bases where there was a gap before (though obviously translocations do occur within cells of individuals...hello cancer). Both procedures use the same chain or psl file, which can be made by lastz or blat or etc.The author of pslMap also had this to say:
+>
+> Both methods are dependent on the alignments used and how they are filtered. The README in pslMap describes how to do the syntenic filtering used for cross-species transmap. It requires some experimentation to see if the alignments produce the desired results.
+>
+> The bit algorithmic difference is that liftover lifts block boundaries which pslMap is per-base. So liftover produces something more resembling an annotation while pslMap shows the evolutionary changes. Also, pslMap requires converting to psl; there are tools to do this.
+
+The rtracklayer's `liftOver` is more like pslMap which considers possible rearrangements
+between the species. A range can be mapped to multiple ranges -- sum of width of these
+ranges should equal to width of the original range.
+
+
+## TODO (may use chr8)
+
+check one-base range does not have such result,
+check same chromosome,
+check same strand,
+check no overlap,
+check order on the strand,
+
+

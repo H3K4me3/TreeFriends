@@ -31,7 +31,7 @@ if (!requireNamespace('BSgenome.PAbelii.UCSC.ponAbe2'))
 
 # File integrity
 stopifnot(file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))
-#stopifnot(tools::md5sum("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz") == "773e9e97759a4a5b4555c5d7e1e14313")
+stopifnot(tools::md5sum("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz") == "773e9e97759a4a5b4555c5d7e1e14313")
 
 # Create index
 if (!file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz.tbi"))

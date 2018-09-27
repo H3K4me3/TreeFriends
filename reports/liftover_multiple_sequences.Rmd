@@ -1,12 +1,13 @@
 ---
 title: "Interpreting One-to-many Liftover Results"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
 
 
 The implementation of `rtracklayer::liftOver` and UCSC liftover tool is different.
@@ -30,12 +31,137 @@ between the species. A range can be mapped to multiple ranges -- sum of width of
 ranges should equal to width of the original range.
 
 
-## TODO (may use chr8)
+## Investigation on chromosome 8
 
-check one-base range does not have such result,
-check same chromosome,
-check same strand,
-check no overlap,
-check order on the strand,
+```{r}
+suppressPackageStartupMessages({
+    library(here)
+    
+    library(Rsamtools)
+    library(rtracklayer)
+    library(VariantAnnotation)
+
+    library(BSgenome.Hsapiens.UCSC.hg38)
+    library(BSgenome.PAbelii.UCSC.ponAbe2)
+})
+```
+
+
+Sample some ranges from chr8
+
+```{r}
+range <- as(seqinfo(BSgenome.Hsapiens.UCSC.hg38), "GRanges")
+range <- range["chr8"]
+seqlevels(range) <- "chr8"
+range <- slidingWindows(range, width = 1000, step = 1000)
+range <- range$chr8
+range <- unname(range)
+
+set.seed(5)
+sample_ranges <- sample(range, 1000)
+sample_ranges
+```
+
+```{r}
+sample_variants <- readVcf(
+    TabixFile(here("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz")),
+    param = ScanVcfParam(which = sample_ranges)
+)
+sample_variants <- rowRanges(sample_variants)
+sample_variants$paramRangeID <- NULL
+sample_variants$QUAL <- NULL
+sample_variants$FILTER <- NULL
+strand(sample_variants) <- "+"
+sample_variants
+```
+
+### LiftOver the sample variants to ponAbe2
+
+
+```{r}
+grl.ponAbe2 <- liftOver(
+    sample_variants,
+    import.chain(here("raw_data/chainfiles/hg38ToPonAbe2.over.chain"))
+)
+grl.ponAbe2@unlistData$REF <- NULL
+grl.ponAbe2@unlistData$ALT <- NULL
+sample_variants$loc.ponAbe2 <- grl.ponAbe2
+```
+
+## Fact Checks
+
+### Number of the mapped ranges
+
+```{r}
+table(lengths(sample_variants$loc.ponAbe2))
+```
+
+### One-base range does not map to multiple ranges
+
+```{r}
+all(lengths(sample_variants[width(sample_variants) == 1]$loc.ponAbe2) %in% c(1, 0))
+```
+
+### Width of the original range is always greater than sum of width of the mapped ranges
+
+```{r}
+mulmapping_variants <- sample_variants[lengths(sample_variants$loc.ponAbe2) > 1]
+table(width(mulmapping_variants) - sapply(mulmapping_variants$loc.ponAbe2, function(x) sum(width(x))))
+```
+
+### Chromosomes and strand of the mapped ranges
+
+```{r}
+chr_strand <- function(x) paste(seqnames(x), as.character(strand(x)), sep = ":")
+table(chr_strand(unlist(sample_variants$loc.ponAbe2)))
+table(chr_strand(unlist(mulmapping_variants$loc.ponAbe2)))
+```
+
+### Mapped ranges are on the same strand
+
+```{r}
+is_same_strand <- function(x) length(unique(as.character(strand(x)))) <= 1
+all(sapply(mulmapping_variants$loc.ponAbe2, is_same_strand))
+```
+
+### There is no overlap between the mapped ranges
+
+```{r}
+no_overlap <- function(x) {
+    all(countOverlaps(x, x) == 1)
+}
+all(sapply(mulmapping_variants$loc.ponAbe2, no_overlap))
+```
+
+### The mapped ranges are mostly ordered from 5' to 3'
+
+```{r}
+in_order <- function(x) {
+    strand <- unique(as.character(strand(x)))
+    stopifnot(length(strand) == 1)
+    stopifnot(length(x) >= 2)
+    
+    for (i in seq_along(x)) {
+        if (i == 1) next
+        a <- x[i - 1]
+        b <- x[i]
+        if (strand == "+")
+            if (start(b) <= end(a))
+                return(FALSE)
+        if (strand == "-")
+            if (start(b) >= end(a))
+                return(FALSE)
+    }
+    return(TRUE)
+}
+table(sapply(mulmapping_variants$loc.ponAbe2, in_order))
+Filter(Negate(in_order), mulmapping_variants$loc.ponAbe2)
+```
+
+
+
+## TODO
+
+generate a table showing the mapped sequences
 
 

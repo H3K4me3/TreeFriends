@@ -3,24 +3,21 @@ library(here)
 
 setwd(here())
 
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+
 ### dbSNP package from Bioconductor  #####-------------------------------
 
-if (!requireNamespace('SNPlocs.Hsapiens.dbSNP151.GRCh38')) {
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("SNPlocs.Hsapiens.dbSNP151.GRCh38")
-}
+if (!requireNamespace('SNPlocs.Hsapiens.dbSNP151.GRCh38'))
+    BiocManager::install("SNPlocs.Hsapiens.dbSNP151.GRCh38")
 
 ### BSgenome packages from Bioconductor #####----------------------------
 
-if (!requireNamespace('BSgenome.Hsapiens.UCSC.hg38')) {
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("BSgenome.Hsapiens.UCSC.hg38")
-}
+if (!requireNamespace('BSgenome.Hsapiens.UCSC.hg38'))
+    BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
 
-if (!requireNamespace('BSgenome.Ptroglodytes.UCSC.panTro5')) {
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("BSgenome.Ptroglodytes.UCSC.panTro5")
-}
+if (!requireNamespace('BSgenome.Ptroglodytes.UCSC.panTro5'))
+    BiocManager::install("BSgenome.Ptroglodytes.UCSC.panTro5")
 
 ### Install self-made BSgenome packages #####---------------------------- 
 

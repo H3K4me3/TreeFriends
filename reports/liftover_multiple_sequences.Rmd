@@ -155,7 +155,11 @@ in_order <- function(x) {
     return(TRUE)
 }
 table(sapply(mulmapping_variants$loc.ponAbe2, in_order))
-Filter(Negate(in_order), mulmapping_variants$loc.ponAbe2)
+local({
+    options(showTailLines=Inf)
+    print(Filter(Negate(in_order), mulmapping_variants$loc.ponAbe2))
+    options(showTailLines=NULL)
+})
 ```
 
 

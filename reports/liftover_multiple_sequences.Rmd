@@ -36,6 +36,7 @@ ranges should equal to width of the original range.
 ```{r}
 suppressPackageStartupMessages({
     library(here)
+    library(magrittr)
     
     library(Rsamtools)
     library(rtracklayer)
@@ -43,6 +44,7 @@ suppressPackageStartupMessages({
 
     library(BSgenome.Hsapiens.UCSC.hg38)
     library(BSgenome.PAbelii.UCSC.ponAbe2)
+    library(DT)
 })
 ```
 
@@ -58,8 +60,8 @@ range <- range$chr8
 range <- unname(range)
 
 set.seed(5)
-sample_ranges <- sample(range, 1000)
-sample_ranges
+sample_ranges <- sample(range, 10000)
+sample_ranges <- sample_ranges[order(start(sample_ranges))]
 ```
 
 ```{r}
@@ -74,6 +76,16 @@ sample_variants$FILTER <- NULL
 strand(sample_variants) <- "+"
 sample_variants
 ```
+
+There are duplicated rows in the `sample_variants` since the variants may
+overlap with the boundary of the ranges.
+
+```{r}
+anyDuplicated(names(sample_variants))
+sample_variants <- sample_variants[unique(names(sample_variants))]
+anyDuplicated(names(sample_variants))
+```
+
 
 ### LiftOver the sample variants to ponAbe2
 
@@ -107,6 +119,7 @@ all(lengths(sample_variants[width(sample_variants) == 1]$loc.ponAbe2) %in% c(1, 
 ```{r}
 mulmapping_variants <- sample_variants[lengths(sample_variants$loc.ponAbe2) > 1]
 table(width(mulmapping_variants) - sapply(mulmapping_variants$loc.ponAbe2, function(x) sum(width(x))))
+table(width(mulmapping_variants) - sapply(mulmapping_variants$loc.ponAbe2, function(x) sum(width(x))) >= 1)
 ```
 
 ### Chromosomes and strand of the mapped ranges
@@ -155,17 +168,56 @@ in_order <- function(x) {
     return(TRUE)
 }
 table(sapply(mulmapping_variants$loc.ponAbe2, in_order))
+as.list(Filter(Negate(in_order), mulmapping_variants$loc.ponAbe2))
+```
+
+### For those without multi-position mapping, how many have shirked width
+
+```{r}
 local({
-    options(showTailLines=Inf)
-    print(Filter(Negate(in_order), mulmapping_variants$loc.ponAbe2))
-    options(showTailLines=NULL)
+    v <- sample_variants[
+        width(sample_variants) > 1 & lengths(sample_variants$loc.ponAbe2) == 1]
+    v$loc.ponAbe2 <- unlist(v$loc.ponAbe2)
+    print(table(width(v) - width(v$loc.ponAbe2)))
+    print(table(width(v) - width(v$loc.ponAbe2) >= 1))
 })
 ```
 
+## If width(REF) > 1, then width(ALT) == 1
+
+But why?
 
 
-## TODO
+## A table of problematic mappings
 
-generate a table showing the mapped sequences
-
+```{r}
+tb <- local({
+    width_not_eq <- function(x) {
+        l <- unlist(x$loc.ponAbe2)
+        x[width(x) != width(l)]
+    }
+    variants <- sample_variants[width(sample_variants) > 1]
+    part_1 <- variants[lengths(variants$loc.ponAbe2) > 1]
+    part_2 <- variants[lengths(variants$loc.ponAbe2) == 1] %>% width_not_eq
+    variants <- c(part_1, part_2)
+    
+    names(variants) <- NULL
+    names(variants$loc.ponAbe2) <- NULL
+    
+    ans <- variants
+    mcols(ans) <- NULL
+    ans <- as.data.frame(ans)
+    ans$end <- NULL
+    ans$strand <-  NULL
+    ans$width.REF <- ans$width
+    ans$width <- NULL
+    ans$width.ALT <- nchar(as.character(unlist(variants$ALT)))
+    ans$N.MappedSeqs <- lengths(variants$loc.ponAbe2)
+    ans$widths.MappedSeqs <- as.list(width(variants$loc.ponAbe2))
+    ans$shirked.width <- sapply(ans$widths.MappedSeqs, sum)
+    ans$shirked.width <- ans$shirked.width < ans$width.REF
+    ans
+})
+datatable(tb)
+```
 

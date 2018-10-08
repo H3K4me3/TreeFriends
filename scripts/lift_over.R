@@ -29,6 +29,7 @@ cat(sprintf("======== In total %s sliding ranges ========\\n", length(slidingRan
 table(seqnames(slidingRanges))[table(seqnames(slidingRanges)) != 0]
 
 read_vcf <- function(range) {
+    stopifnot(length(range) == 1)
     
     # Drop unused seqlevels
     seqlevels(range) <- as.character(unique(seqnames(range)))
@@ -44,6 +45,10 @@ read_vcf <- function(range) {
     stopifnot(all(strand(ans) == "*"))
     strand(ans) <- "+"
     ans
+    
+    # Only select ones that has start(ans) lays inside
+    # the range to avoid duplicated results.
+    ans[start(ans) >= start(range) & start(ans) <= end(range)]
 }
 
 lift_over <- local({

@@ -25,7 +25,8 @@ slidingRanges <- local({
     unname(unlist(slidingRanges, use.names = FALSE))
 })
 slidingRanges    
-cat(sprintf("======== In total %s sliding ranges ========\\n", length(slidingRanges)))
+#slidingRanges <- slidingRanges[42]
+cat(sprintf("======== In total %s sliding ranges ========\n", length(slidingRanges)))
 table(seqnames(slidingRanges))[table(seqnames(slidingRanges)) != 0]
 
 read_vcf <- function(range) {
@@ -40,15 +41,30 @@ read_vcf <- function(range) {
     )
     
     ans <- rowRanges(vcf)
-    ans$QUAL <- NULL
-    ans$paramRangeID <- NULL
+    
+    # Assign strand to positive strand
     stopifnot(all(strand(ans) == "*"))
     strand(ans) <- "+"
-    ans
+    
+    # Remove some columns
+    ans$QUAL <- NULL
+    ans$paramRangeID <- NULL
+    ans$FILTER <- NULL
+    
+    # Remove names
+    mcols(ans) <- cbind(DataFrame(id = names(ans)), mcols(ans))
+    names(ans) <- NULL
     
     # Only select ones that has start(ans) lays inside
     # the range to avoid duplicated results.
     ans[start(ans) >= start(range) & start(ans) <= end(range)]
+    
+    # Unlist ALT
+    stopifnot(is(ans$ALT, "DNAStringSetList"))
+    stopifnot(all(lengths(ans$ALT) == 1))
+    ans$ALT <- unlist(ans$ALT)
+    
+    ans
 }
 
 lift_over <- local({
@@ -88,15 +104,15 @@ lift_over <- local({
 
 # TODO: get snp id
 
-if (!dir.exists(here("lift_over_results")))
-    dir.create(here("lift_over_results"))
+if (!dir.exists(here("results/lift_over")))
+    dir.create(here("results/lift_over"), recursive = TRUE)
 
 bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
     function(i) {
         gr <- slidingRanges[i]
         gr <- read_vcf(gr)
         gr <- lift_over(gr)
-        saveRDS(gr, here(sprintf("lift_over_results/%04d_%s.rds", i,
+        saveRDS(gr, here(sprintf("results/lift_over/%04d_%s.rds", i,
                              format(Sys.time(), "%Y-%m-%d_%H:%M"))))
         return(TRUE)
     }

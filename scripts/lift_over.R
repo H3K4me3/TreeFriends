@@ -102,6 +102,29 @@ lift_over <- local({
     }
 })
 
+make_snp_table <- function(gr) {
+    gr <- gr[width(gr) == 1]
+    ans <- data.frame(stringsAsFactors = FALSE,
+        REF = as.character(gr$REF),
+        ALT = as.character(gr$ALT)
+    )
+    stopifnot(all(unique(lengths(gr$dna.panTro5)) %in% c(0, 1)))
+    stopifnot(all(unique(lengths(gr$dna.gorGor5)) %in% c(0, 1)))
+    stopifnot(all(unique(lengths(gr$dna.ponAbe2)) %in% c(0, 1)))
+    
+    to_char <- function(dnasetl) {
+        stopifnot(all(unique(lengths(dnasetl)) %in% c(0, 1)))
+        ans <- replicate(length(dnasetl), NA_character_)
+        ans[lengths(dnasetl) == 1] <- as.character(unlist(dnasetl))
+        ans
+    }
+    ans$panTro5 <- to_char(gr$dna.panTro5)
+    ans$gorGor5 <- to_char(gr$dna.gorGor5)
+    ans$ponAbe2 <- to_char(gr$dna.ponAbe2)
+    
+    ans
+}
+
 # TODO: get snp id
 
 if (!dir.exists(here("results/lift_over")))

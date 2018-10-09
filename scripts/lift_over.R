@@ -9,6 +9,7 @@ library(BSgenome.Hsapiens.UCSC.hg38)
 library(BSgenome.Ptroglodytes.UCSC.panTro5)
 library(BSgenome.GGorilla.UCSC.gorGor5)
 library(BSgenome.PAbelii.UCSC.ponAbe2)
+library(BSgenome.Mmulatta.UCSC.rheMac8)
 
 # In order to get snp id
 #library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
@@ -67,11 +68,13 @@ read_vcf <- function(range) {
     ans
 }
 
+
 lift_over <- local({
     suppressWarnings({
         chain.panTro5 <- import.chain("raw_data/chainfiles/hg38ToPanTro5.over.chain")
         chain.gorGor5 <- import.chain("raw_data/chainfiles/hg38ToGorGor5.over.chain")
         chain.ponAbe2 <- import.chain("raw_data/chainfiles/hg38ToPonAbe2.over.chain")
+        chain.rheMac8 <- import.chain("raw_data/chainfiles/hg38ToRheMac8.over.chain")
     })
     
     function(gr) {
@@ -93,10 +96,15 @@ lift_over <- local({
         
         gr$loc.panTro5 <- lift(gr, chain.panTro5)
         gr$dna.panTro5 <- queryString(gr$loc.panTro5, BSgenome.Ptroglodytes.UCSC.panTro5)
+        
         gr$loc.gorGor5 <- lift(gr, chain.gorGor5)
         gr$dna.gorGor5 <- queryString(gr$loc.gorGor5, BSgenome.GGorilla.UCSC.gorGor5)
+        
         gr$loc.ponAbe2 <- lift(gr, chain.ponAbe2)
         gr$dna.ponAbe2 <- queryString(gr$loc.ponAbe2, BSgenome.PAbelii.UCSC.ponAbe2)
+        
+        gr$loc.rheMac8 <- lift(gr, chain.rheMac8)
+        gr$dna.rheMac8 <- queryString(gr$loc.rheMac8, BSgenome.Mmulatta.UCSC.rheMac8)
         
         gr
     }
@@ -111,6 +119,7 @@ make_snp_table <- function(gr) {
     stopifnot(all(unique(lengths(gr$dna.panTro5)) %in% c(0, 1)))
     stopifnot(all(unique(lengths(gr$dna.gorGor5)) %in% c(0, 1)))
     stopifnot(all(unique(lengths(gr$dna.ponAbe2)) %in% c(0, 1)))
+    stopifnot(all(unique(lengths(gr$dna.rheMac8)) %in% c(0, 1)))
     
     to_char <- function(dnasetl) {
         stopifnot(all(unique(lengths(dnasetl)) %in% c(0, 1)))
@@ -121,6 +130,7 @@ make_snp_table <- function(gr) {
     ans$panTro5 <- to_char(gr$dna.panTro5)
     ans$gorGor5 <- to_char(gr$dna.gorGor5)
     ans$ponAbe2 <- to_char(gr$dna.ponAbe2)
+    ans$rheMac8 <- to_char(gr$dna.rheMac8)
     
     ans
 }

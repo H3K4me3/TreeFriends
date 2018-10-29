@@ -114,8 +114,6 @@ lift_over <- local({
 })
 
 
-library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
-
 make_snp_table <- function(gr) {
     gr <- gr[width(gr) == 1]
     ans <- tibble::tibble(
@@ -142,30 +140,32 @@ make_snp_table <- function(gr) {
     ans
 }
 
-annotate_rsid <- function(table) {
-    loc <- GPos(table$Loc)
-    seqlevelsStyle(loc) <- seqlevelsStyle(SNPlocs.Hsapiens.dbSNP151.GRCh38)[1]
-    stopifnot(length(unique(seqnames(loc))) == 1)
-    snps <- snpsByOverlaps(SNPlocs.Hsapiens.dbSNP151.GRCh38, range(loc))
-    
-    rsid <- vector("list", length(loc))
-    hits <- findMatches(ranges(loc), ranges(snps))
-    
-    q_hits <- queryHits(hits)
-    tmp <- split(snps$RefSNP_id[subjectHits(hits)], q_hits)
-    rsid[as.integer(names(tmp))] <- tmp
-    table$rsid <- rsid
-    table
-}
+#library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
+
+#annotate_rsid <- function(table) {
+#    loc <- GPos(table$Loc)
+#    seqlevelsStyle(loc) <- seqlevelsStyle(SNPlocs.Hsapiens.dbSNP151.GRCh38)[1]
+#    stopifnot(length(unique(seqnames(loc))) == 1)
+#    snps <- snpsByOverlaps(SNPlocs.Hsapiens.dbSNP151.GRCh38, range(loc))
+#    
+#    rsid <- vector("list", length(loc))
+#    hits <- findMatches(ranges(loc), ranges(snps))
+#    
+#    q_hits <- queryHits(hits)
+#    tmp <- split(snps$RefSNP_id[subjectHits(hits)], q_hits)
+#    rsid[as.integer(names(tmp))] <- tmp
+#    table$rsid <- rsid
+#    table
+#}
 
 
 write_table <- function(x, path) {
-    x$rsid <- sapply(x$rsid, function(x) {
-        if (length(x) == 1)
-            x[1]
-        else
-            paste(x, collapse = ",")
-    })
+    #x$rsid <- sapply(x$rsid, function(x) {
+    #    if (length(x) == 1)
+    #        x[1]
+    #    else
+    #        paste(x, collapse = ",")
+    #})
     readr::write_tsv(x, path, na = ".")
 }
 
@@ -183,7 +183,7 @@ bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
         d <- read_vcf(d)
         d <- lift_over(d)
         d <- make_snp_table(d)
-        d <- annotate_rsid(d)
+        #d <- annotate_rsid(d)
         path <- file.path(res_dir, sprintf("%04d_%s.txt.gz", i,
                                            format(Sys.time(), "%Y-%m-%d_%H:%M")))
         write_table(d, path)

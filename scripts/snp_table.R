@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 ## This script will produce a table showing SNP and their mapped
 ## nucleotides on other genomes.
 
@@ -26,7 +28,6 @@ slidingRanges <- local({
     slidingRanges <- slidingWindows(slidingRanges, width = 1000000, step = 1000000)
     unname(unlist(slidingRanges, use.names = FALSE))
 })
-slidingRanges
 #slidingRanges <- slidingRanges[24]
 cat(sprintf("======== In total %s sliding ranges ========\n", length(slidingRanges)))
 table(seqnames(slidingRanges))[table(seqnames(slidingRanges)) != 0]
@@ -173,8 +174,11 @@ res_dir <- here("results", paste0("snptable_", format(Sys.time(), "%Y-%m-%d_%H:%
 if (!dir.exists(res_dir))
     dir.create(res_dir, recursive = TRUE)
 
+cat(("======== Start processing the data  ========\n"))
+
 bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
     function(i) {
+        cat(sprintf("-- process %s --", i))
         d <- slidingRanges[i]
         d <- read_vcf(d)
         d <- lift_over(d)
@@ -183,6 +187,7 @@ bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
         path <- file.path(res_dir, sprintf("%04d_%s.txt.gz", i,
                                            format(Sys.time(), "%Y-%m-%d_%H:%M")))
         write_table(d, path)
+        cat(sprintf("-- finish  %s --", i))
     }
 )
 

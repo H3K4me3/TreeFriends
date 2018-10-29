@@ -1,3 +1,6 @@
+## This script will produce a table showing SNP and their mapped
+## nucleotides on other genomes.
+
 
 library(here)
 
@@ -11,8 +14,6 @@ library(BSgenome.GGorilla.UCSC.gorGor5)
 library(BSgenome.PAbelii.UCSC.ponAbe2)
 library(BSgenome.Mmulatta.UCSC.rheMac8)
 
-# In order to get snp id
-#library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
 
 library(BiocParallel)
 
@@ -25,17 +26,18 @@ slidingRanges <- local({
     slidingRanges <- slidingWindows(slidingRanges, width = 1000000, step = 1000000)
     unname(unlist(slidingRanges, use.names = FALSE))
 })
-slidingRanges    
-#slidingRanges <- slidingRanges[42]
+slidingRanges
+#slidingRanges <- slidingRanges[24]
 cat(sprintf("======== In total %s sliding ranges ========\n", length(slidingRanges)))
 table(seqnames(slidingRanges))[table(seqnames(slidingRanges)) != 0]
+
 
 read_vcf <- function(range) {
     stopifnot(length(range) == 1)
     
     # Drop unused seqlevels
     seqlevels(range) <- as.character(unique(seqnames(range)))
-        
+    
     vcf <- readVcf(
         TabixFile(here("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz")),
         param = ScanVcfParam(which = range)
@@ -110,9 +112,13 @@ lift_over <- local({
     }
 })
 
+
+library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
+
 make_snp_table <- function(gr) {
     gr <- gr[width(gr) == 1]
-    ans <- data.frame(stringsAsFactors = FALSE,
+    ans <- tibble::tibble(
+        Loc = as.character(gr),
         REF = as.character(gr$REF),
         ALT = as.character(gr$ALT)
     )
@@ -135,21 +141,64 @@ make_snp_table <- function(gr) {
     ans
 }
 
-# TODO: get snp id
+annotate_rsid <- function(table) {
+    loc <- GPos(table$Loc)
+    seqlevelsStyle(loc) <- seqlevelsStyle(SNPlocs.Hsapiens.dbSNP151.GRCh38)[1]
+    stopifnot(length(unique(seqnames(loc))) == 1)
+    snps <- snpsByOverlaps(SNPlocs.Hsapiens.dbSNP151.GRCh38, range(loc))
+    
+    rsid <- vector("list", length(loc))
+    hits <- findMatches(ranges(loc), ranges(snps))
+    
+    q_hits <- queryHits(hits)
+    tmp <- split(snps$RefSNP_id[subjectHits(hits)], q_hits)
+    rsid[as.integer(names(tmp))] <- tmp
+    table$rsid <- rsid
+    table
+}
 
-if (!dir.exists(here("results/lift_over")))
-    dir.create(here("results/lift_over"), recursive = TRUE)
+
+write_table <- function(x, path) {
+    x$rsid <- sapply(x$rsid, function(x) {
+        if (length(x) == 1)
+            x[1]
+        else
+            paste(x, collapse = ",")
+    })
+    readr::write_tsv(x, path, na = ".")
+}
+
+
+res_dir <- here("results", paste0("snptable_", format(Sys.time(), "%Y-%m-%d_%H:%M")))
+if (!dir.exists(res_dir))
+    dir.create(res_dir, recursive = TRUE)
 
 bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
     function(i) {
-        gr <- slidingRanges[i]
-        gr <- read_vcf(gr)
-        gr <- lift_over(gr)
-        saveRDS(gr, here(sprintf("results/lift_over/%04d_%s.rds", i,
-                             format(Sys.time(), "%Y-%m-%d_%H:%M"))))
-        return(TRUE)
+        d <- slidingRanges[i]
+        d <- read_vcf(d)
+        d <- lift_over(d)
+        d <- make_snp_table(d)
+        d <- annotate_rsid(d)
+        path <- file.path(res_dir, sprintf("%04d_%s.txt.gz", i,
+                                           format(Sys.time(), "%Y-%m-%d_%H:%M")))
+        write_table(d, path)
     }
 )
+
+
+#if (!dir.exists(here("results/lift_over")))
+#    dir.create(here("results/lift_over"), recursive = TRUE)
+#bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),
+#    function(i) {
+#        gr <- slidingRanges[i]
+#        gr <- read_vcf(gr)
+#        gr <- lift_over(gr)
+#        saveRDS(gr, here(sprintf("results/lift_over/%04d_%s.rds", i,
+#                             format(Sys.time(), "%Y-%m-%d_%H:%M"))))
+#        return(TRUE)
+#    }
+#)
 
 
 

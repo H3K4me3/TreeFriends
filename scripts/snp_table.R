@@ -115,12 +115,15 @@ lift_over <- local({
 
 
 make_snp_table <- function(gr) {
-    gr <- gr[width(gr) == 1]
+    ## Filter the insertion and deletion, only keep SNPs
+    gr <- gr[width(gr$REF) == 1 & width(gr$ALT) == 1]
+    
     ans <- tibble::tibble(
         Loc = as.character(gr),
         REF = as.character(gr$REF),
         ALT = as.character(gr$ALT)
     )
+    
     stopifnot(all(unique(lengths(gr$dna.panTro5)) %in% c(0, 1)))
     stopifnot(all(unique(lengths(gr$dna.gorGor5)) %in% c(0, 1)))
     stopifnot(all(unique(lengths(gr$dna.ponAbe2)) %in% c(0, 1)))

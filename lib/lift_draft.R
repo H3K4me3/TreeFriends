@@ -41,7 +41,7 @@ read_vcf <- function(range) {
     
     # Only select ones that has start(ans) lays inside
     # the range to avoid duplicated results.
-    ans[start(ans) >= start(range) & start(ans) <= end(range)]
+    ans <- ans[start(ans) >= start(range) & start(ans) <= end(range)]
     
     # Unlist ALT
     stopifnot(is(ans$ALT, "DNAStringSetList"))

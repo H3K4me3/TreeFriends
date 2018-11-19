@@ -42,14 +42,34 @@ if (!file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz.tbi"))
 
 # Check chain files
 # The chain files are downloaded from ftp://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/
-stopifnot(file.exists("raw_data/chainfiles/hg38ToGorGor5.over.chain"))
-stopifnot(file.exists("raw_data/chainfiles/hg38ToPanTro5.over.chain"))
-stopifnot(file.exists("raw_data/chainfiles/hg38ToPonAbe2.over.chain"))
-stopifnot(file.exists("raw_data/chainfiles/hg38ToRheMac8.over.chain"))
-stopifnot(tools::md5sum("raw_data/chainfiles/hg38ToGorGor5.over.chain") == "fa532f74ede70ccc724badcf3a65acaf")
-stopifnot(tools::md5sum("raw_data/chainfiles/hg38ToPanTro5.over.chain") == "cf39846b96f245d1ff27942d1ab94461")
-stopifnot(tools::md5sum("raw_data/chainfiles/hg38ToPonAbe2.over.chain") == "18089c8a1b07268f8547a9402ce4d3b1")
-stopifnot(tools::md5sum("raw_data/chainfiles/hg38ToRheMac8.over.chain") == "da89c3353a70db359210ff7d45febf8d")
+prepare_chainfile <- function(url, md5 = NULL) {
+    gzpath <- here::here("raw_data/chainfiles", basename(url))
+    path <- here::here("raw_data/chainfiles", sub("\\.gz$", "", basename(url)))
+    if (!file.exists(path)) {
+        download.file(url, gzpath)
+        system2("gunzip", gzpath, wait = TRUE)
+    }
+    if (!is.null(md5))
+        stopifnot(tools::md5sum(path) == md5)
+    invisible(path)
+}
+
+prepare_chainfile(
+    "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToGorGor5.over.chain.gz",
+    "fa532f74ede70ccc724badcf3a65acaf"
+)
+prepare_chainfile(
+    "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToPanTro5.over.chain.gz",
+    "cf39846b96f245d1ff27942d1ab94461"
+)
+prepare_chainfile(
+    "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToPonAbe2.over.chain.gz",
+    "18089c8a1b07268f8547a9402ce4d3b1"
+)
+prepare_chainfile(
+    "http://hgdownload.cse.ucsc.edu/goldenpath/hg38/liftOver/hg38ToRheMac8.over.chain.gz",
+    "da89c3353a70db359210ff7d45febf8d"
+)
 
 
 

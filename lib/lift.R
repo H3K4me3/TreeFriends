@@ -1,17 +1,17 @@
 
-# library(here)
-# 
-# library(Rsamtools)
-# library(rtracklayer)
-# #library(VariantAnnotation)
-# 
-# library(BSgenome.Hsapiens.UCSC.hg38)
-# library(BSgenome.Ptroglodytes.UCSC.panTro5)
-# library(BSgenome.GGorilla.UCSC.gorGor5)
-# library(BSgenome.PAbelii.UCSC.ponAbe2)
-# library(BSgenome.Mmulatta.UCSC.rheMac8)
-# 
-# library(BiocParallel)
+library(here)
+
+library(Rsamtools)
+library(rtracklayer)
+#library(VariantAnnotation)
+
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(BSgenome.Ptroglodytes.UCSC.panTro5)
+library(BSgenome.GGorilla.UCSC.gorGor5)
+library(BSgenome.PAbelii.UCSC.ponAbe2)
+library(BSgenome.Mmulatta.UCSC.rheMac8)
+
+#library(BiocParallel)
 
 read_vcf <- function(range) {
     stopifnot(length(range) == 1)

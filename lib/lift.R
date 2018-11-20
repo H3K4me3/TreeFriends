@@ -3,7 +3,7 @@ library(here)
 
 library(Rsamtools)
 library(rtracklayer)
-#library(VariantAnnotation)
+library(VariantAnnotation)
 
 library(BSgenome.Hsapiens.UCSC.hg38)
 library(BSgenome.Ptroglodytes.UCSC.panTro5)

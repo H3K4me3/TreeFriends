@@ -8,14 +8,9 @@ setwd(here())
 
 source(here('lib/lift.R'))
 
-slidingRanges <- local({
-    slidingRanges <- GRanges(seqinfo(BSgenome.Hsapiens.UCSC.hg38))
-    slidingRanges <- slidingRanges[seqnames(slidingRanges) %in%
-        names(genome(VcfFile(here("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))))]
-    slidingRanges <- slidingWindows(slidingRanges, width = 1000000, step = 1000000)
-    unname(unlist(slidingRanges, use.names = FALSE))
-})
+slidingRanges <- slidingGenome()
 #slidingRanges <- slidingRanges[24]
+
 cat(sprintf("======== In total %s sliding ranges ========\n", length(slidingRanges)))
 table(seqnames(slidingRanges))[table(seqnames(slidingRanges)) != 0]
 

@@ -13,6 +13,23 @@ library(BSgenome.Mmulatta.UCSC.rheMac8)
 
 #library(BiocParallel)
 
+slidingGenome <- function(width = 1000000, chr = NULL) {
+    vcffile <- VcfFile(here("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))
+    # Get chromosome and chromosome length
+    slidingRanges <- GRanges(seqinfo(BSgenome.Hsapiens.UCSC.hg38))
+    # Only keep necessary chromosomes
+    slidingRanges <- slidingRanges[seqnames(slidingRanges) %in% names(genome(vcffile))]
+    
+    slidingRanges <- slidingWindows(slidingRanges, width = width, step = width)
+    
+    # Restrict to given chromosomes
+    if (!is.null(chr))
+        slidingRanges <- slidingRanges[seqnames(slidingRanges) %in% chr]
+    
+    unname(unlist(slidingRanges, use.names = FALSE))
+}
+
+
 read_vcf <- function(range) {
     stopifnot(length(range) == 1)
     

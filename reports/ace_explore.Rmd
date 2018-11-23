@@ -1,0 +1,184 @@
+---
+title: "Ancestral state reconstruction explore"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Using phytools and ape for ancestral state reconstruction
+
+Refer http://www.phytools.org/eqg2015/asr.html
+
+```{r}
+library(phytools)
+library(ape)
+```
+
+## Read the tree
+
+```{r}
+tree <- local({
+    #tree <- read.tree("https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/94/scripts/pipeline/species_tree.ensembl.branch_len.nw")
+    tree <- read.tree("http://hgdownload.cse.ucsc.edu/goldenpath/hg38/multiz17way/hg38.17way.nh")
+    ## FIXME: note that the branch lengths are not consistent with timeline
+    tree$tip.label <- sub("[0-9]*$", "", tree$tip.label)
+    tree <- keep.tip(tree, c("hg", "gorGor", "panTro", "ponAbe", "rheMac"))
+    tree
+})
+plotTree(tree)
+```
+
+## Load sample SNP data
+
+```{r}
+library(here)
+snps <- local({
+    snps <- readr::read_tsv(here("results/snptable_2018-11-20_04:15/1523_2018-11-20_04:18.txt.gz"))
+    
+    ## Only select some SNPs
+    idx <- apply(snps[! (names(snps) %in% c("ALT", "Loc"))], 1, function(r) {
+        length(unique(r)) >= 4
+    })
+    snps <- snps[idx, ]
+    
+    # Fill with NA
+    for (i in seq_along(snps)) {
+        col <- snps[[i]]
+        col[col == "."] <- NA
+        snps[[i]] <- col
+    }
+    
+    snps
+})
+snps
+```
+
+Function to convert the rows to tip list.
+
+```{r}
+extract_tips <- function(snps, idx = 42) {
+    stopifnot(length(idx) == 1)
+    tips <- snps[idx, ]
+    tips$Loc <- NULL
+    tips$ALT <- NULL
+    names(tips)[names(tips) == "REF"] <- "hg38"
+    names(tips) <- sub("[0-9]*$", "", names(tips))
+    unlist(as.list(tips))
+}
+```
+
+
+## Ancestral character estimation
+
+We use maximum likelihood estimation for the discrete characters.
+For the transition/transversion rate matrix, we use a Kimura two parameter (K2P) model
+with a default ratio of transitions to transversions of 1.5 (which may be adjusted later).
+
+```{r}
+K2PModel <- function(R = 1.5, N = c("A", "T", "C", "G")) {
+    # R is the the expected ratio of transitions to transversions.
+    # Refer http://www.cbs.dtu.dk/courses/27615/exercises/distance2.php.save
+    # FIXME: choose another default R value?
+    b <- 1
+    a <- 2 * R * b
+    m <- matrix(c(0, b, a, b,
+                  b, 0, b, a,
+                  a, b, 0, b,
+                  b, a, b, 0), byrow = TRUE, ncol = 4)
+    colnames(m) <- c("A", "C", "G", "T")
+    rownames(m) <- c("A", "C", "G", "T")
+    N <- sort(na.omit(unique(N)))
+    m <- m[N, N, drop = FALSE]
+    m
+}
+```
+
+The default matrix:
+
+```{r}
+K2PModel()
+```
+
+### A sample prediction
+
+We just try one pair of values first.
+
+```{r}
+tips <- extract_tips(snps, 9)
+tips
+fit <- ace(tips, tree, type = "discrete", model = K2PModel(N = tips), marginal = FALSE)
+fit
+```
+
+The element `lik.anc` gives the scaled likelihoods of each ancestral states at each node.
+
+```{r}
+round(fit$lik.anc, 3)
+```
+
+
+### Visualize the predicted ancestral state
+
+```{r}
+vis_ace <- function(fit, tree, tips) {
+    
+    ## A, C, T, G + "Black" for NA state
+    cols <- RColorBrewer::brewer.pal(4, "Set3")
+    cols <- c(cols, "black")
+    cols_order <- c("A", "C", "G", "T", "?")
+    
+    ## Plot Tree
+    mod_tip_labels <- function(tree, tips) {
+        ### Modify the tip labels
+        tips <- tips[tree$tip.label] ## Put tips in the same order
+        tips[is.na(tips)] <- "?"
+        tree$tip.label <- paste0(tree$tip.label, " (", tips, ")")
+        tree
+    }
+    plotTree(mod_tip_labels(tree, tips), offset = 1)
+    
+    ## Plot node labels
+    norm_nodepie <- function(pie) {
+        ## Fill extra columns and order the columns in order to
+        ## make the color scale constant.
+        for (coln in cols_order) {
+            if (! coln %in% colnames(pie))
+                pie <- cbind(pie, matrix(0, nrow(pie), dimnames = list(NULL, coln)))
+        }
+        pie <- pie[, cols_order]
+        pie
+    }
+    pie.node <- norm_nodepie(fit$lik.anc)
+    nodelabels(
+        node = Ntip(tree) + 1:Nnode(tree),
+        pie = pie.node,
+        piecol = cols,
+        cex = 1
+    )
+    
+    ## Plot tip labels
+    tips <- tips[tree$tip.label] ## Put tips in the same order
+    pie.tips <- to.matrix(tips, cols_order)
+    pie.tips[, "?"] <- apply(pie.tips, 1, function(r) if (sum(r) == 0) 1 else 0)
+    tiplabels(
+        pie = pie.tips,
+        piecol = cols,
+        cex = 0.8
+    )
+    
+    ## Add legend
+    add.simmap.legend(
+        colors = setNames(cols, cols_order),
+        x = 0, y = 2, prompt = FALSE
+    )
+}
+vis_ace(fit, tree, tips)
+```
+
+
+
+

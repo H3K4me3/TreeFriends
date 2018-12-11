@@ -33,7 +33,10 @@ if (!requireNamespace('BSgenome.PAbelii.UCSC.ponAbe2'))
 ### Check raw data  #####------------------------------------------------
 
 # File integrity
-stopifnot(file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))
+if (!file.exists("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz"))
+    ## The current link can be expired, maybe host it in another place.
+    download.file("https://gatech.box.com/shared/static/ls1cq5qr8x254w9su7v5pc3z4bjgmsub.gz",
+                  destfile = "raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz")
 stopifnot(tools::md5sum("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz") == "773e9e97759a4a5b4555c5d7e1e14313")
 
 # Create index

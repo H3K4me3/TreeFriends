@@ -21,14 +21,12 @@ library(ape)
 ## Read the tree
 
 ```{r}
-tree <- local({
-    #tree <- read.tree("https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/94/scripts/pipeline/species_tree.ensembl.branch_len.nw")
-    tree <- read.tree("http://hgdownload.cse.ucsc.edu/goldenpath/hg38/multiz17way/hg38.17way.nh")
-    ## FIXME: note that the branch lengths are not consistent with timeline
-    tree$tip.label <- sub("[0-9]*$", "", tree$tip.label)
-    tree <- keep.tip(tree, c("hg", "gorGor", "panTro", "ponAbe", "rheMac"))
-    tree
-})
+#tree <- read.tree("https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/94/scripts/pipeline/species_tree.ensembl.branch_len.nw")
+#tree <- read.tree("http://hgdownload.cse.ucsc.edu/goldenpath/hg38/multiz17way/hg38.17way.nh")
+#tree$tip.label <- sub("[0-9]*$", "", tree$tip.label)
+#tree <- keep.tip(tree, c("hg", "gorGor", "panTro", "ponAbe", "rheMac"))
+tree <- read.tree(text = "((((hg:6.4[&&NHX:dist=6.4:name=hg:support=1.0],panTro:6.4[&&NHX:dist=6.4:name=panTro:support=1.0])1:2.21[&&NHX:dist=2.21:name=:support=1.0],gorGor:8.61[&&NHX:dist=8.61:name=gorGor:support=1.0])1:6.59[&&NHX:dist=6.59:name=:support=1.0],ponAbe:15.2[&&NHX:dist=15.2:name=ponAbe:support=1.0])1:12.9[&&NHX:dist=12.9:name=:support=1.0],rheMac:28.1[&&NHX:dist=28.1:name=rheMac:support=1.0]);")
+tree
 plotTree(tree)
 ```
 

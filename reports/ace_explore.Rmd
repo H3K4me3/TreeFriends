@@ -91,6 +91,10 @@ K2PModel <- function(R = 1.5, N = c("A", "T", "C", "G")) {
     rownames(m) <- c("A", "C", "G", "T")
     N <- sort(na.omit(unique(N)))
     m <- m[N, N, drop = FALSE]
+    
+    # TMP
+    #m <- m[, rev(1:ncol(m))]
+    
     m
 }
 ```
@@ -106,7 +110,7 @@ K2PModel()
 We just try one pair of values first.
 
 ```{r}
-tips <- extract_tips(snps, 9)
+tips <- extract_tips(snps, 88)
 tips
 fit <- ace(tips, tree, type = "discrete", model = K2PModel(N = tips), marginal = FALSE)
 fit
@@ -178,5 +182,54 @@ vis_ace(fit, tree, tips)
 ```
 
 
+## Check some values
 
+```{r eval=FALSE, include=FALSE}
+acesnp <- function(which) {
+    tips <- extract_tips(snps, which)
+    fit <- ace(tips, tree, type = "discrete", model = K2PModel(N = tips), marginal = FALSE)
+    vis_ace(fit, tree, tips)
+}
+for (i in 1:100) {
+    #Sys.sleep(1)
+    print(i)
+    acesnp(i)
+}
+```
+
+```{r}
+acesnp2 <- function(hg = "A", panTro = "A", gorGor = "A", ponAbe = "A", rheMac = "A", 
+                    marginal = FALSE) {
+    tips <- c(hg = hg, panTro = panTro, gorGor = gorGor, ponAbe = ponAbe, rheMac = rheMac)
+    fit <- ace(tips, tree, type = "discrete", model = K2PModel(N = tips),
+               marginal = marginal)
+    
+    #print(K2PModel(N = tips))
+    #print(fit$index.matrix)
+    #print(fit$lik.anc)
+    #print(fit$rates)
+    
+    vis_ace(fit, tree, tips)
+    invisible(fit)
+}
+acesnp2("A", "A", "C", "A", "A")
+acesnp2("A", "A", "C", "C", "C")
+acesnp2("A", "C", "C", "C", "C")
+
+acesnp2("A", "A", "A", "A", "C")
+acesnp2("A", "A", "A", "C", "C")
+acesnp2("A", "A", "C", "C", "C")
+acesnp2("A", "C", "C", "C", "C")
+
+acesnp2("A", "A", "A", "A", "T")
+acesnp2("A", "A", "A", "A", "G")
+acesnp2("A", "A", "A", "A", "C")
+
+acesnp2("A", "A", "A", "C", "T")
+acesnp2("A", "A", "A", "C", "G")
+acesnp2("A", "A", "A", "C", "C")
+
+acesnp2("A", "A", "A", "C", "G", marginal = FALSE)
+acesnp2("A", "A", "A", "C", "G", marginal = TRUE)
+```
 

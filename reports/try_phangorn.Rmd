@@ -1,0 +1,89 @@
+---
+title: "Try phangorn"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Phangorn
+
+I have tried `ace` function from `ape` package which uses maximum likelihood method.
+But I think the ML method may not work well when the tree is small.
+The `MPR` function is an alternative method which uses most parsimonious reconstruction.
+
+Here I would like to try the `phangorn` package. It has both parsimony method and maximum
+likelihood method to predict the ancestral state.
+
+Reference: https://cran.r-project.org/web/packages/phangorn/vignettes/Ancestral.pdf
+
+```{r}
+library(phangorn)
+```
+
+
+First to read the tree.
+
+```{r}
+tree <- read.tree(text = "((((hg:6.4[&&NHX:dist=6.4:name=hg:support=1.0],panTro:6.4[&&NHX:dist=6.4:name=panTro:support=1.0])1:2.21[&&NHX:dist=2.21:name=:support=1.0],gorGor:8.61[&&NHX:dist=8.61:name=gorGor:support=1.0])1:6.59[&&NHX:dist=6.59:name=:support=1.0],ponAbe:15.2[&&NHX:dist=15.2:name=ponAbe:support=1.0])1:12.9[&&NHX:dist=12.9:name=:support=1.0],rheMac:28.1[&&NHX:dist=28.1:name=rheMac:support=1.0]);")
+tree$node.label <- NULL
+tree
+```
+
+## Predict some cases
+
+```{r}
+fit_anc <- function(tree, tips, ...) {
+    stopifnot(is.list(tips))
+    if (is.null(names(tips)))
+        names(tips) <- tree$tip.label
+    stopifnot(identical(names(tips), tree$tip.label))
+    tips <- phyDat(tips, type = "DNA")
+    cat(" - parsimony score:", parsimony(tree, tips), "\n")
+    ans <- ancestral.pars(tree, tips, ...)
+    #print(ans) # TODO: make sure sitePattern == 1
+    ans
+}
+```
+
+When there are two alternative alleles in human:
+
+```{r, out.width="60%", fig.dim=c(7,5)}
+plotAnc(tree, fit_anc(tree, list("V", "C", "G", "G", "G")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "A", "G", "G")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "A", "A", "G")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "A", "A", "C")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "C", "A", "C")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "?", "A", "C")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "?", "A", "?")))
+plotAnc(tree, fit_anc(tree, list("V", "C", "?", "A", "G"))) # In this case, we know nothing..
+```
+
+When there are two states in human.
+
+```{r, out.width="60%", fig.dim=c(7,5)}
+plotAnc(tree, fit_anc(tree, list("W", "A", "A", "T", "G")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "A", "T", "A")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "?", "T", "A")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "?", "T", "?")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "?", "A", "?")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "T", "A", "G")))
+plotAnc(tree, fit_anc(tree, list("W", "A", "T", "T", "G")))
+```
+
+## TODO:
+
+1. a cost matrix (Not transitions rates!!) for the transitions between two states
+    may be specified to the function. How to convert K2P Model to cost matrix?
+
+2. Try `ancestral.pars(type = "ACCTRAN")`, the results can be slightly different, what's
+    the difference?
+

@@ -1,9 +1,10 @@
 ---
 title: "Try phangorn"
 output:
-  pdf_document:
-    toc: yes
   html_document:
+    toc: yes
+    self_contained: false
+  pdf_document:
     toc: yes
 editor_options:
   chunk_output_type: console
@@ -34,7 +35,7 @@ First to read the tree.
 
 ```{r}
 tree <- read.tree(text = "((((hg:6.4[&&NHX:dist=6.4:name=hg:support=1.0],panTro:6.4[&&NHX:dist=6.4:name=panTro:support=1.0])1:2.21[&&NHX:dist=2.21:name=:support=1.0],gorGor:8.61[&&NHX:dist=8.61:name=gorGor:support=1.0])1:6.59[&&NHX:dist=6.59:name=:support=1.0],ponAbe:15.2[&&NHX:dist=15.2:name=ponAbe:support=1.0])1:12.9[&&NHX:dist=12.9:name=:support=1.0],rheMac:28.1[&&NHX:dist=28.1:name=rheMac:support=1.0]);")
-tree$node.label <- NULL
+tree$node.label <- c("A", "B", "C", "D")
 tree
 ```
 
@@ -78,6 +79,62 @@ plotAnc(tree, fit_anc(tree, list("W", "A", "?", "A", "?")))
 plotAnc(tree, fit_anc(tree, list("W", "A", "T", "A", "G")))
 plotAnc(tree, fit_anc(tree, list("W", "A", "T", "T", "G")))
 ```
+
+## Add cost matrix
+
+```{r}
+COST <- function(ratio) {
+    levels <- c("a", "c", "g", "t")
+    transversion_cost <- ratio
+    cost <- matrix(transversion_cost, 4, 4, dimnames = list(levels, levels))
+    cost <- cost - transversion_cost * diag(4)
+    cost
+    transitions <- rbind(
+        c("a", "g"),
+        c("g", "a"),
+        c("c", "t"),
+        c("t", "c")
+    )
+    cost[transitions] <- 1
+    unname(cost)
+}
+fit_anc2 <- function(tree, tips, cost = COST(1.1)) {
+    stopifnot(is.list(tips))
+    if (is.null(names(tips)))
+        names(tips) <- tree$tip.label
+    stopifnot(identical(names(tips), tree$tip.label))
+    tips <- phyDat(tips, type = "DNA")
+    ans <- ancestral.pars(tree, tips, return = "prob", cost = cost)
+    #tmp <<- ancestral.pars(tree, tips, return = 'phyDat')
+    ans
+}
+```
+
+```{r}
+# A to G (transition) > A to T (transversion).
+plotAnc(tree, fit_anc2(tree, list("G", "T", "A", "A", "A")))
+plotAnc(tree, fit_anc2(tree, list("T", "C", "A", "A", "A")))
+
+# Another case
+plotAnc(tree, fit_anc2(tree, list("T", "T", "G", "A", "A")))
+
+# Does this make sense ???
+plotAnc(tree, fit_anc2(tree, list("C", "A", "A", "A", "T"), cost = COST(9)))
+plotAnc(tree, fit_anc2(tree, list("C", "A", "A", "A", "T"), cost = COST(1.1)))
+```
+
+## Function for wrapping multiple predictions
+
+```{r}
+fit_anc3 <- function(tree, phyd) {
+    #' @phyd: A phyDat object
+    stopifnot(identical(names(phyd), tree$tip.label))
+    cost <- COST(1.1)
+    ans <- ancestral.pars(tree, phyd, return = "phyDat", cost = cost)
+    ans
+}
+```
+
 
 ## TODO:
 

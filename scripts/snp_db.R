@@ -1,21 +1,24 @@
 
-library(here)
-
-library(Rsamtools)
-library(rtracklayer)
-library(VariantAnnotation)
-
-library(Biostrings)
-library(BiocParallel)
-library(BSgenome.Hsapiens.UCSC.hg38)
-library(BSgenome.Ptroglodytes.UCSC.panTro5)
-library(BSgenome.GGorilla.UCSC.gorGor5)
-library(BSgenome.PAbelii.UCSC.ponAbe2)
-library(BSgenome.Mmulatta.UCSC.rheMac8)
-#library(RSQLite)
+suppressPackageStartupMessages({
+    library(here)
+    
+    library(Rsamtools)
+    library(rtracklayer)
+    library(VariantAnnotation)
+    
+    library(Biostrings)
+    library(BiocParallel)
+    library(BSgenome.Hsapiens.UCSC.hg38)
+    library(BSgenome.Ptroglodytes.UCSC.panTro5)
+    library(BSgenome.GGorilla.UCSC.gorGor5)
+    library(BSgenome.PAbelii.UCSC.ponAbe2)
+    library(BSgenome.Mmulatta.UCSC.rheMac8)
+    #library(RSQLite)
+})
+options(verbose = TRUE)
 
 VCF_FILE_LOC = here("raw_data/ALL.TOPMed_freeze5_hg38_dbSNP.vcf.gz")
-DB_LOC = here("results/snpdb.sqlite")
+#DB_LOC = here("results/snpdb.sqlite")
 
 slidingGenome <- function(width = 1000000, chr = NULL) {
     vcffile <- VcfFile(VCF_FILE_LOC)
@@ -270,6 +273,7 @@ fit_anc <- function(phyd) {
 ## ======= Starting the tasks ===========
 
 slidingRanges <- slidingGenome()
+#set.seed(4)
 #slidingRanges <- sample(slidingGenome(chr = "chr8"), 10)
 
 # #### ## Chr8
@@ -281,22 +285,34 @@ slidingRanges <- slidingGenome()
 
 #rg <- slidingRanges[1]
 
-RES_DIR = "results"
+write_log <- function(file, content) {
+    date <- format(Sys.time(), "%Y-%m-%d_%H:%M")
+    date <- paste0("@", date, " > ")
+    cat(paste0(date, content, "\n"), file = file, append = TRUE)
+}
+
+RES_DIR = here("results/snptable")
 if (!dir.exists(RES_DIR))
     dir.create(RES_DIR, recursive = TRUE)
-
-LOG_FILE <- "snp_db.log"
 
 main_run <- function(rg) {
     
     identity_name <- sprintf("%s_%s", as.character(rg),
                              format(Sys.time(), "%Y-%m-%d_%H:%M"))
     output_path <- file.path(RES_DIR, paste0(identity_name, ".tsv.gz"))
+    LOG_FILE <- file.path(RES_DIR, paste0(identity_name, ".log"))
     
-    cat(sprintf("> Running %s\n", as.character(rg)), file = LOG_FILE, append = TRUE)
+    write_log(LOG_FILE, "Start Running")
+    write_log(LOG_FILE, "Running ReadVcf")
     
     snp <- extractSNPFromVcf(vcf = VCF_FILE_LOC, rg)
+    
+    write_log(LOG_FILE, "Running CollapsedView")
+    
     colsnp <- snpCollapsedView(snp)
+    
+    write_log(LOG_FILE, "Running LiftAll")
+    
     lift_res <- lift_all(colsnp)
     lift_res <- cbind(colsnp, lift_res)
     phyd <- dplyr::select(
@@ -310,6 +326,8 @@ main_run <- function(rg) {
     phyd <- phyDat(t(as.matrix(phyd)))
     stopifnot(identical(names(phyd), TREE$tip.label))
     
+    write_log(LOG_FILE, "Running FitAnc")
+    
     anc_res <- fit_anc(phyd)
     anc_res
     
@@ -318,8 +336,12 @@ main_run <- function(rg) {
     res
     ## res is a data frame that we want to store
     
+    write_log(LOG_FILE, "Running WriteData")
+    
     readr::write_tsv(res, output_path)
-    cat(sprintf("< Finished %s\n", as.character(rg)), file = LOG_FILE, append = TRUE)
+    
+    write_log(LOG_FILE, "Finished Running All")
+    NULL
 }
 
 bplapply(seq_along(slidingRanges), BPPARAM = MulticoreParam(),

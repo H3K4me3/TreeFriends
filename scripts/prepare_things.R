@@ -30,6 +30,23 @@ if (!requireNamespace('BSgenome.GGorilla.UCSC.gorGor5'))
 if (!requireNamespace('BSgenome.PAbelii.UCSC.ponAbe2'))
     devtools::install_url("https://github.com/H3K4me3/BSgenome.PAbelii.UCSC.ponAbe2/releases/download/virtual-0.0.1/BSgenome.PAbelii.UCSC.ponAbe2_0.0.1.tar.gz")
 
+
+### Misc R packages #####------------------------------------------------
+local({
+    prepare_package <- function(pkg) {
+        if (!requireNamespace(pkg))
+            BiocManager::install(pkg)
+    }
+    prepare_package('VariantAnnotation')
+    prepare_package('here')
+    prepare_package('Rsamtools')
+    prepare_package('rtracklayer')
+    prepare_package('VariantAnnotation')
+    prepare_package('Biostrings')
+    prepare_package('BiocParallel')
+    prepare_package('phangorn')
+})
+
 ### Check raw data  #####------------------------------------------------
 
 # File integrity

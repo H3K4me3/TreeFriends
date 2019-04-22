@@ -183,7 +183,7 @@ main_run <- function(rg) {
     anc_res <- fit_anc(phyd)
     anc_res
     
-    res <- dplyr::select(lift_res, - starts_with("dna"))
+    res <- dplyr::select(lift_res, - dplyr::starts_with("dna"))
     res <- cbind(res, anc_res)
     res
     ## res is a data frame that we want to store

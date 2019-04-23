@@ -19,6 +19,7 @@ suppressPackageStartupMessages({
 })
 
 options(verbose = TRUE)
+options(mc.cores = 4)
 
 source(here("lib/liftover.R"))
 
@@ -158,6 +159,19 @@ main_run <- function(rg) {
     write_log(LOG_FILE, "Running ReadVcf")
     
     snp <- extractSNPFromVcf(vcf = VCF_FILE_LOC, rg)
+    
+    if (nrow(snp) == 0) {
+        write_log("Skipping liftover etc..")
+        
+        write_log(LOG_FILE, "Running WriteData")
+        
+        # Write an empty data frame
+        readr::write_tsv(tibble::tibble(), output_path)
+        
+        write_log(LOG_FILE, "Finished Running All")
+        
+        return()
+    }
     
     write_log(LOG_FILE, "Running CollapsedView")
     

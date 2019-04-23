@@ -86,6 +86,10 @@ snpCollapsedView <- function(snp) {
     grouped <- dplyr::group_by(snpdf, seqnames, start, end, strand, REF)
     ans <- dplyr::summarize(grouped, ALL = paste0(REF, ALT, collapse = ""))
     ans <- dplyr::ungroup(ans)
+    #if (nrow(ans) == 0) {
+    #    ans$ALL <- as.character(ans$ALL) # When snp has zero row, "ALL" will become a logical vector
+    #}
+    stopifnot(is.character(ans$ALL))
     ans$NS <- unique(snpdf$NS)
     ans$AN <- unique(snpdf$AN)
     
@@ -110,6 +114,8 @@ snpCollapsedView <- function(snp) {
         ans
     })
     
+    #if (length(ans$ALL))
+    #    ans$ALL <- mergeIUPACLetters(ans$ALL)
     ans$ALL <- mergeIUPACLetters(ans$ALL)
     ans
 }

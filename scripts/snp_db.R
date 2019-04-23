@@ -18,8 +18,7 @@ suppressPackageStartupMessages({
     library(phangorn)
 })
 
-options(verbose = TRUE)
-options(mc.cores = 4)
+#options(verbose = TRUE)
 
 source(here("lib/liftover.R"))
 

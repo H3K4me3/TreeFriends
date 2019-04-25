@@ -161,7 +161,7 @@ main_run <- function(rg) {
     snp <- extractSNPFromVcf(vcf = VCF_FILE_LOC, rg)
     
     if (length(snp) == 0) {
-        write_log("Skipping liftover etc..")
+        write_log(LOG_FILE, "Skipping liftover etc..")
         
         write_log(LOG_FILE, "Running WriteData")
         

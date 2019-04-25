@@ -19,7 +19,6 @@ suppressPackageStartupMessages({
 })
 
 #options(verbose = TRUE)
-options(mc.cores = 4)
 
 source(here("lib/liftover.R"))
 

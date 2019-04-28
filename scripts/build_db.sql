@@ -24,8 +24,14 @@ CREATE TABLE snp (
        "root"       TEXT,
        "ponAbe-else"  TEXT,
        "hg-pan-gor"   TEXT,
-       "hg-panTro"    TEXT
+       "hg-panTro"    TEXT,
+       /* "end" should be same as "start" */
+       PRIMARY KEY (seqnames, start)
 );
 
+/* I will assume that index have been created for the primary key.
+ * So I will not create an index on SNP location.                  */
+
 .import /dev/stdin snp
+
 .exit

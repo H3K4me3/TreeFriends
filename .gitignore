@@ -4,3 +4,4 @@
 .Ruserdata
 raw_data
 gh-pages
+__pycache__/

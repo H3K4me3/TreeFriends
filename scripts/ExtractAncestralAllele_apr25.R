@@ -26,14 +26,14 @@ frequency_table
 loc <- dplyr::transmute(frequency_table,
                  seqnames = CHR, start = pos_hg38,
                  end = pos_hg38, width = 1L)
-                     
+rm(frequency_table)
 
+DB <- src_sqlite(path = here("results/snpdb.sqlite3"))
 
 search_db <- function(seqnames, location) {
     stopifnot(is.character(seqnames))
     location <- as.integer(location)
-    db <- src_sqlite(path = here("results/snpdb.sqlite3"))
-    snp <- tbl(db, "snp")
+    snp <- tbl(DB, "snp")
     sel <- dplyr::select(
         snp, seqnames, start, `hg-panTro`, `hg-panTro-gorGor` = `hg-pan-gor`,
         `hg-panTro-gorGor-ponAbe` = `ponAbe-else`,
@@ -46,9 +46,24 @@ search_db <- function(seqnames, location) {
     res
 }
 
-ans <- search_db(loc$seqnames, loc$start)
+if (file.exists(here("results/ExtractAncestralAllele_apr25.txt")))
+    file.remove("results/ExtractAncestralAllele_apr25.txt")
 
-readr::write_tsv(ans, here("results/ExtractAncestralAllele_apr25.txt"))
+write_res <- function(df) {
+    readr::write_tsv(df, here("results/ExtractAncestralAllele_apr25.txt"), append = TRUE)
+}
+
+gc()
+
+slidingidx <- rep(1:16, each = 100000, length.out = nrow(loc))
+slidingidx
+
+for (i in seq(max(slidingidx))) {
+    idx <- slidingidx == i
+    df <- loc[idx, ]
+    write_res(search_db(df$seqnames, df$start))
+    gc(full = FALSE)
+}
 
 # source(here("lib/liftover.R"))
 # library(BSgenome.Hsapiens.UCSC.hg38)

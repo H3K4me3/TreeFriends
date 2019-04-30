@@ -29,10 +29,9 @@ loc <- dplyr::transmute(frequency_table,
 rm(frequency_table)
 
 DB <- src_sqlite(path = here("results/snpdb.sqlite3"))
+copy_to(DB, loc, temporary = TRUE, name = "LOC_QUERY")
 
-search_db <- function(seqnames, location) {
-    stopifnot(is.character(seqnames))
-    location <- as.integer(location)
+search_db <- function() {
     snp <- tbl(DB, "snp")
     sel <- dplyr::select(
         snp, seqnames, start, `hg-panTro`, `hg-panTro-gorGor` = `hg-pan-gor`,
@@ -41,29 +40,35 @@ search_db <- function(seqnames, location) {
         hg = hg, panTro = panTro, gorGor = gorGor, ponAbe = ponAbe, rheMac = rheMac
     )
     
-    key <- tibble::tibble(seqnames = seqnames, start = location)
-    res <- left_join(key, sel, copy = TRUE)
+    #key <- tibble::tibble(seqnames = seqnames, start = location)
+    #res <- left_join(key, sel, copy = TRUE)
+    key <- tbl(DB, "LOC_QUERY")
+    res <- left_join(key, sel)
+    
     res
 }
 
 if (file.exists(here("results/ExtractAncestralAllele_apr25.txt")))
     file.remove("results/ExtractAncestralAllele_apr25.txt")
 
-write_res <- function(df) {
-    readr::write_tsv(df, here("results/ExtractAncestralAllele_apr25.txt"), append = TRUE)
-}
+res <- search_db() %>% collect(n = Inf)
+readr::write_tsv(res, here("results/ExtractAncestralAllele_apr25.txt"))
 
-gc()
-
-slidingidx <- rep(1:16, each = 100000, length.out = nrow(loc))
-slidingidx
-
-for (i in seq(max(slidingidx))) {
-    idx <- slidingidx == i
-    df <- loc[idx, ]
-    write_res(search_db(df$seqnames, df$start))
-    gc(full = FALSE)
-}
+### write_res <- function(df) {
+###     readr::write_tsv(df, here("results/ExtractAncestralAllele_apr25.txt"), append = TRUE)
+### }
+### 
+### gc()
+### 
+### slidingidx <- rep(1:16, each = 100000, length.out = nrow(loc))
+### slidingidx
+### 
+### for (i in seq(max(slidingidx))) {
+###     idx <- slidingidx == i
+###     df <- loc[idx, ]
+###     write_res(search_db(df$seqnames, df$start))
+###     gc(full = FALSE)
+### }
 
 # source(here("lib/liftover.R"))
 # library(BSgenome.Hsapiens.UCSC.hg38)

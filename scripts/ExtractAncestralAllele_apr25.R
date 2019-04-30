@@ -1,8 +1,6 @@
 
 library(dplyr)
 library(here)
-library(SNPlocs.Hsapiens.dbSNP151.GRCh38)
-library(GenomicRanges)
 
 stopifnot(
     tools::md5sum(here("raw_data/Site_frequency_table_apr25.txt")) == "0a8424afd597252c61ee0e2522dbd4e6"
@@ -21,11 +19,14 @@ frequency_table <- dplyr::mutate(frequency_table, CHR = paste0("chr", CHR)) %>%
     dplyr::mutate(CHR = if_else(CHR == "chr26", "chrM", CHR))
 frequency_table
 
-loc <- GRanges(frequency_table$CHR, IRanges(frequency_table$pos_hg38, width = 1))
-loc <- as.data.frame(loc)
-loc <- loc %>% dplyr::mutate(seqnames = as.character(seqnames)) %>%
-    dplyr::select(-strand)
-loc
+#loc <- GRanges(frequency_table$CHR, IRanges(frequency_table$pos_hg38, width = 1))
+#loc <- as.data.frame(loc)
+#loc <- loc %>% dplyr::mutate(seqnames = as.character(seqnames)) %>%
+#    dplyr::select(-strand)
+loc <- dplyr::transmute(frequency_table,
+                 seqnames = CHR, start = pos_hg38,
+                 end = pos_hg38, width = 1L)
+                     
 
 
 search_db <- function(seqnames, location) {

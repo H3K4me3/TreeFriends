@@ -32,6 +32,13 @@ CREATE TABLE snp (
 /* I will assume that index have been created for the primary key.
  * So I will not create an index on SNP location.                  */
 
+/* Import data */
 .import /dev/stdin snp
+
+/* Convert NA from string to NULL */
+UPDATE snp SET AC_A = NULL WHERE AC_A = "NA";
+UPDATE snp SET AC_C = NULL WHERE AC_C = "NA";
+UPDATE snp SET AC_G = NULL WHERE AC_G = "NA";
+UPDATE snp SET AC_T = NULL WHERE AC_T = "NA";
 
 .exit

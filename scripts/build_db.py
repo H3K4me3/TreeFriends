@@ -15,7 +15,6 @@ EXPECTED_HEADER = "seqnames\tstart\tend\tstrand\tREF\tALL\tNS\tAN\tAC_A\tAC_C\tA
 SCRIPT_DIR = os.path.dirname(__file__)
 RES_DIR = os.path.join(SCRIPT_DIR, "../results/snptable")
 
-TABLE_PATH = os.path.join(SCRIPT_DIR, "../results/snptable.tsv")
 DB_PATH = os.path.join(SCRIPT_DIR, "../results/snpdb.sqlite3")
 
 def get_results():

@@ -1,0 +1,227 @@
+---
+title: "Snp stat"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+## Read the current results
+
+```{r}
+RES_DIR = here::here("results/snptable")
+files <- list.files(RES_DIR, full.names = TRUE)
+files <- c(
+    "chr8:10000001-11000000_2019-03-29_08:22.tsv.gz", 
+    "chr8:1000001-2000000_2019-03-29_08:16.tsv.gz", 
+    "chr8:101000001-102000000_2019-03-29_08:16.tsv.gz", 
+    "chr8:115000001-116000000_2019-03-29_08:23.tsv.gz", 
+    "chr8:125000001-126000000_2019-03-29_08:18.tsv.gz", 
+    "chr8:130000001-131000000_2019-03-29_08:20.tsv.gz", 
+    "chr8:36000001-37000000_2019-03-29_08:13.tsv.gz", 
+    "chr8:39000001-40000000_2019-03-29_08:21.tsv.gz", 
+    "chr8:42000001-43000000_2019-03-29_08:19.tsv.gz", 
+    "chr8:85000001-86000000_2019-03-29_08:13.tsv.gz"
+)
+files <- file.path(RES_DIR, files)
+raw_data <- (
+    lapply(files, function(f) readr::read_tsv(f, col_types = "ciiccciiiiiiccccccccc"))
+) 
+raw_data <- dplyr::bind_rows(raw_data)
+dim(raw_data)
+```
+
+### Suspicious Allele Count
+
+```{r}
+suspicious_data <- local({
+    na_to_zero <- function(x) ifelse(is.na(x), 0, x)
+    count_sum <- Reduce(`+`, lapply(paste0("AC_", c("A", "C", "G", "T")),
+        function(col) na_to_zero(raw_data[[col]])))
+    raw_data[count_sum >= raw_data$AN[[1]], ]
+})
+suspicious_data
+nrow(suspicious_data)/nrow(raw_data)
+```
+
+One example would be `rs3107484`. The raw lines in the VCF file shows:
+
+```
+chr8	10002997	TOPMed_freeze_5?chr8:10,002,997'01	A	C	50	SVM;DISC	VRT=1;NS=62784;AN=125568;AC=62064;AF=0.494266;Het=61226;Hom=419	NA:FRQ	125568:0.494266
+chr8	10002997	TOPMed_freeze_5?chr8:10,002,997'02	A	G	255	PASS	VRT=1;NS=62784;AN=125568;AC=125568;AF=1;Het=0;Hom=62784	NA:FRQ	125568:1
+```
+
+The record at Ensembl is 
+[here](https://useast.ensembl.org/Homo_sapiens/Variation/Explore?db=core;r=8:10002990-10003000;v=rs3107484;vdb=variation;vf=381246786).
+The online TOPMed record can be viewed with
+[bravo](https://bravo.sph.umich.edu/freeze5/hg38/variant/8-10002997-A-G).
+
+The allele count is confusing for me and not likely to be reliable.
+
+### Rowwise Processing
+
+```{r}
+count_successful_calls <- function(df) {
+    COLS = c("panTro", "gorGor", "ponAbe", "rheMac")
+    count <- lapply(COLS, function(col) as.integer(!(df[[col]] %in% c("-", "n")) ))
+    count <- Reduce(`+`, count)
+    tibble::tibble(SuccessfulLiftOver = count)
+}
+extract_major_allele <- function(df) {
+    ## FIXME: the allele count is not reliable, the algorithm here also does not work
+    AN <- unique(df$AN); stopifnot(length(AN) == 1)
+    REF <- df$REF
+    df <- dplyr::select(df, A = AC_A, C = AC_C, G = AC_G, T = AC_T)
+    df <- as.matrix(df)
+    ACGT <- c("A", "C", "G", "T")
+    max_alt_idx <- apply(df, 1, function(d) which.max(d))
+    max_alt <- ACGT[max_alt_idx]
+    ## Add the REF allele
+    ## Note that we have the assumption that NA indicates no allele count.
+    df[cbind(seq(nrow(df)), match(REF, ACGT))] <- AN -
+        Reduce(`+`, lapply(ACGT, function(col) {
+            ans <- df[, col]
+            ifelse(is.na(ans), 0, ans)
+        } ))
+    major_allele_idx <- apply(df, 1, function(d) which.max(d))
+    major_allele <- ACGT[major_allele_idx]
+    major_allele
+    major_allele_count <- df[cbind(seq(nrow(df)), major_allele_idx)]
+    ## Allele with second largest count
+    minor_allele_idx <- local({
+        df[cbind(seq(nrow(df)), major_allele_idx)] <- NA
+        apply(df, 1, function(d) which.max(d))
+    })
+    minor_allele <- ACGT[minor_allele_idx]
+    minor_allele_count <- df[cbind(seq(nrow(df)), minor_allele_idx)]
+    elt_allele_count <- AN - major_allele_count - minor_allele_count
+    ans <- tibble::tibble(major_allele = major_allele,
+                          major_allele_count = major_allele_count,
+                          minor_allele = minor_allele,
+                          minor_allele_count = minor_allele_count,
+                          elt_allele_count = elt_allele_count)
+    ans
+}
+count_agreement <- function(df) {
+    ## Susbsititute "n" to "-"
+    primates <- c("panTro", "gorGor", "ponAbe", "rheMac")
+    for (i in primates)
+        df[[i]] <- local({
+            dna <- df[[i]]
+            dna[dna == "n"] <- "-"
+            dna
+        })
+    mat <- as.matrix(df[, primates])
+    
+    reduce_add <- function(lst) {
+        stopifnot(is.list(lst))
+        Reduce(`+`, lst)
+    }
+    agreement_on_x <- function(x) {
+        reduce_add(lapply(primates, function(col) as.integer(mat[, col] == x)))
+    }
+    count_a <- agreement_on_x("a")
+    count_c <- agreement_on_x("c")
+    count_g <- agreement_on_x("g")
+    count_t <- agreement_on_x("t")
+    count <- pmax(count_a, count_c, count_g, count_t)
+    tibble::tibble(AgreementCount = count)
+}
+```
+
+```{r}
+data <- raw_data %>%
+    dplyr::bind_cols(., count_successful_calls(.)) %>%
+    dplyr::bind_cols(., extract_major_allele(.)) %>%
+    dplyr::bind_cols(., count_agreement(.))
+sample_data <- data[sample(seq(nrow(data)), 10000),]
+boxplot(data = sample_data, minor_allele_count ~ SuccessfulLiftOver)
+plot(data = sample_data, SuccessfulLiftOver ~ major_allele_count)
+boxplot(data = sample_data, major_allele_count ~ AgreementCount)
+data %>%
+    dplyr::select(major_allele_count, AgreementCount) %>%
+    ggplot(aes(x = AgreementCount)) +
+    geom_histogram()
+data %>%
+    dplyr::select(major_allele_count, AgreementCount) %>%
+    ggplot(aes(x = major_allele_count, y = stat(density), color = as.factor(AgreementCount))) +
+    geom_freqpoly()
+```
+
+Remove the SNPs whose SuccessfulLiftOver < 3.
+
+```{r}
+subset_data
+```
+
+
+
+---------------------
+
+```{r}
+
+primates_alleles <- dplyr::select(raw_data, REF, hg, panTro, gorGor, ponAbe, rheMac)
+nrow(primates_alleles)
+
+remove_missing <- function(tb) {
+    # "n" and "-"
+    not_missing <- function(x) {
+        ! x %in% c("-", "n")
+    }
+    dplyr::filter(tb,
+                  not_missing(panTro),
+                  not_missing(gorGor),
+                  not_missing(ponAbe),
+                  not_missing(rheMac))
+}
+nrow(remove_missing(primates_alleles))
+nrow(remove_missing(primates_alleles)) / nrow(primates_alleles)
+## 0.766078 of them can be mapped to the four primates
+```
+
+# Remove missing
+
+```{r}
+alleles <- remove_missing(tables) %>%
+    dplyr::select(REF, hg, panTro, gorGor, ponAbe, rheMac)
+alleles
+local({
+    count <- (dplyr::count(alleles, panTro, gorGor, ponAbe, rheMac))
+    count$percent <- round(100 * count$n / sum(count$n), 4)
+    DT::datatable(count, rownames = FALSE)
+})
+alleles_count <- dplyr::count(alleles, panTro, gorGor, ponAbe, rheMac)
+alleles_count <- alleles_count[order(alleles_count$n, decreasing = TRUE), ]
+plot(alleles_count$n)
+local({
+    m <- alleles_count$n[20:length(alleles_count$n)]
+    plot(m)
+})
+```
+
+## Count of consistence
+
+```{Rcpp}
+```
+
+```{r}
+alleles[,-1:2]
+a <- alleles %>% dplyr::select(- REF, -hg)
+apply(a, 1, table)
+```
+
+
+nrow(remove_missing(primates_alleles))
+
+primates_count <- dplyr::count(primates_alleles, panTro, gorGor, ponAbe, rheMac)
+primates_count[order(primates_count$n), ]
+
+
+missing_draw
+
+table((primates_alleles))
+stat_na <- rowsum(as.numeric(primates_alleles == "-"), )

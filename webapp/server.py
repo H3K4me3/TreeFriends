@@ -17,10 +17,12 @@ DB_PATH = os.path.join(PROJECT_ROOT, "results/snpdb.sqlite3")
 db = SNPDB(DB_PATH)
 
 
-app = Flask(__name__)
+app = Flask(__name__,
+            static_url_path = "",
+            static_folder = os.path.join(PROJECT_ROOT, "webapp/static"))
 
 @app.route('/')
-def hello_world():
-    return 'Hello, World!'
+def root():
+     return app.send_static_file('index.html')
 
 

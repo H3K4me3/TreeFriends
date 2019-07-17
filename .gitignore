@@ -5,3 +5,4 @@
 raw_data
 gh-pages
 __pycache__/
+venv/

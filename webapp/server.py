@@ -1,0 +1,26 @@
+
+import os
+import sys
+from flask import Flask
+
+#### Import lib/snpdb.py
+
+if "__file__" in globals():
+    PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
+else:
+    PROJECT_ROOT = ".."
+sys.path.insert(0, os.path.join(PROJECT_ROOT, "lib"))
+
+from snpdb import SNPDB
+
+DB_PATH = os.path.join(PROJECT_ROOT, "results/snpdb.sqlite3")
+db = SNPDB(DB_PATH)
+
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+
+

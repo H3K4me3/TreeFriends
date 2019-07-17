@@ -29,6 +29,7 @@ class SNPDB:
             return AN - (AC_A + AC_C + AC_G + AC_T)
         self.register_pyfunc("expected_REF_AC", 4, expected_REF_AC)
         return self
+    ## only available for this session
     def createview_suspicious_stat(self):
         conn = self.conn
         conn.execute(
@@ -48,7 +49,48 @@ class SNPDB:
             FROM snp
             """
         )
-    def query(self, string):
+    def query(self, string, binding = None):
         cursor = self.conn.cursor()
-        cursor.execute(string)
+        if binding is None:
+            cursor.execute(string)
+        else:
+            cursor.execute(string, binding)
         return cursor
+
+    def get_available_chromosomes(self):
+        cursor = self.query(
+            """
+            select distinct seqnames from snp
+            """
+        )
+        ans = []
+        for row in cursor:
+            ans.append(row[0])
+        return ans
+
+    def get_snp(self, chromosome, loc):
+        cursor = self.query(
+            """
+            select
+              seqnames as chromosome,
+              start as position,
+              REF as ref,
+              NS as sample_number,
+              AN as allele_number,
+              hg, panTro, gorGor, ponAbe, rheMac,
+              `hg-panTro`,
+              `hg-pan-gor` as hg_panTro_gorGor,
+              `ponAbe-else` as hg_panTro_gorGor_ponAbe,
+              root as hg_panTro_gorGor_ponAbe_rheMac
+            from snp
+            where seqnames=? and start=?
+            """, (chromosome, loc)
+        )
+        ## Convert to dict
+        cursor.row_factory = sqlite3.Row
+        return dict(cursor.fetchone())
+
+
+
+
+

@@ -93,7 +93,6 @@ class TreeVis {
 
     async load() {
         let tree = this.tree;
-        // TODO: fetch the data
 
         let data = await this.tree_data();
 

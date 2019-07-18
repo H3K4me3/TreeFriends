@@ -32,7 +32,7 @@
 
 <body>
     <nav id="global-navbar" class="navbar fixed-top navbar-expand navbar-dark bg-dark">
-        <a href="#" class="navbar-brand">Ancestral</a>
+        <a href="#" class="navbar-brand">AncestralSNP</a>
         <ul class="navbar-nav">
             <li class="nav-item text-light">Help</li>
         </ul>
@@ -40,6 +40,22 @@
 
     <main>
         <div id="controlpanel">
+            <h4>Find SNP by position or rsid</h4>
+            <form method="get">
+                <div class="form-group">
+                    <label for="chromosomeinput">Chromosome</label>
+                    <select class="form-control" id="chromosomeinput" name="chromosome">
+                        <option>chr8</option>
+                    </select>
+
+                </div>
+                <div class="form-group">
+                    <label for="positioninput">Position (hg38)</label>
+                    <input class="form-control" type="number" id="positioninput" name="position" min="1" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
         </div>
         <div id="vispanel">
             <div id="tree-container">

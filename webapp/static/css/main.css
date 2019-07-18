@@ -12,6 +12,7 @@ main > #controlpanel {
     flex-grow: 0;
     flex-shrink: 0;
     border: solid 1px grey;
+    padding: 30px;
 }
 
 main > #vispanel {

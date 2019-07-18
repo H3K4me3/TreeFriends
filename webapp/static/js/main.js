@@ -117,7 +117,7 @@ class TreeVis {
             .fontsize(12)
             .height(24)
             .text(function(node) {
-                let alleles = node.data().allele_array.join(",");
+                let alleles = node.data().allele_array.join(",").toUpperCase();
                 let ans = node.data().name + ` (${alleles})`;
                 return ans;
             });

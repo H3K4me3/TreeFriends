@@ -15,17 +15,16 @@
     <script src="https://d3js.org/d3.v3.min.js"></script>
     <script>window.d3v3 = window.d3;</script>
 
+    <!-- TnT Tree -->
+    <link rel="stylesheet" href="http://tntvis.github.io/tnt.tree/build/tnt.tree.css" type="text/css" />
+    <script src="http://tntvis.github.io/tnt.tree/build/tnt.tree.min.js" charset="utf-8"></script>
+
     <!-- TnT Tooltips -->
     <link rel="stylesheet" href="https://tntvis.github.io/tnt.tooltip/build/tnt.tooltip.css" type="text/css"/>
     <!--
          <script src="https://tntvis.github.io/tnt.tooltip/build/tnt.tooltip.min.js"></script>
     -->
     <script src="https://raw.githack.com/Marlin-Na/TnT/master/inst/htmlwidgets/lib/tnt.tooltip/tnt.tooltip.js"></script>
-
-    <!-- ag-Grid -->
-    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
-    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css">
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/main.css" type="text/css">
@@ -38,6 +37,15 @@
             <li class="nav-item text-light">Help</li>
         </ul>
     </nav>
+
+    <main>
+        <div id="controlpanel">
+        </div>
+        <div id="vispanel">
+            <div id="tree-container">
+            </div>
+        </div>
+    </main>
 
 
     <!-- JS -->

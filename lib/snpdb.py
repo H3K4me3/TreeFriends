@@ -6,6 +6,7 @@ class SNPDB:
         self.conn = sqlite3.connect(dbpath)
         self.register_expected_REF_AC()
         self.createview_suspicious_stat()
+        self.createview_tree_nodes()
     def register_pyfunc(self, name, nargs, func):
         self.conn.create_function(name, nargs, func)
         return self
@@ -49,6 +50,27 @@ class SNPDB:
             FROM snp
             """
         )
+    def createview_tree_nodes(self):
+        conn = self.conn
+        conn.execute(
+            """
+            CREATE TEMP VIEW tree_nodes AS
+            SELECT
+              seqnames as chromosome,
+              start as position,
+              REF as ref,
+              NS as sample_number,
+              AN as allele_number,
+              hg, panTro, gorGor, ponAbe, rheMac,
+              `hg-panTro` as ancestry1,
+              `hg-pan-gor` as ancestry2,
+              `ponAbe-else` as ancestry3,
+              root as ancestry4
+            FROM snp
+            """
+        )
+
+
     def query(self, string, binding = None):
         cursor = self.conn.cursor()
         if binding is None:
@@ -71,24 +93,16 @@ class SNPDB:
     def get_snp(self, chromosome, loc):
         cursor = self.query(
             """
-            select
-              seqnames as chromosome,
-              start as position,
-              REF as ref,
-              NS as sample_number,
-              AN as allele_number,
-              hg, panTro, gorGor, ponAbe, rheMac,
-              `hg-panTro`,
-              `hg-pan-gor` as hg_panTro_gorGor,
-              `ponAbe-else` as hg_panTro_gorGor_ponAbe,
-              root as hg_panTro_gorGor_ponAbe_rheMac
-            from snp
-            where seqnames=? and start=?
-            """, (chromosome, loc)
+            select * from tree_nodes where chromosome=? and position=?
+            """,
+            (chromosome, loc)
         )
         ## Convert to dict
         cursor.row_factory = sqlite3.Row
-        return dict(cursor.fetchone())
+        res = cursor.fetchone()
+        if res is None:
+            return None
+        return dict(res)
 
 
 

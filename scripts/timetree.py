@@ -4,15 +4,15 @@
 
 from ete3 import Tree
 
-t = Tree()
+t = Tree(name = "ancestry4")
 
-n1 = t.add_child(dist = 12.9, name = "root")
+n1 = t.add_child(dist = 12.9, name = "ancestry3")
 t.add_child(name = "rheMac", dist = 28.1)
 
-n2 = n1.add_child(dist = 6.59, name = "hg.panTro.ponAbe")
+n2 = n1.add_child(dist = 6.59, name = "ancestry2")
 n1.add_child(name = "ponAbe", dist = 15.2)
 
-n3 = n2.add_child(dist = 2.21, name = "hg.panTro")
+n3 = n2.add_child(dist = 2.21, name = "ancestry1")
 n2.add_child(name = "gorGor", dist = 8.61)
 
 n3.add_child(name = "hg", dist = 6.4)

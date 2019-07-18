@@ -1,0 +1,23 @@
+
+main {
+    display: flex;
+    position: fixed;
+    top: 50px;
+    height: calc(100vh - 50px);
+    width: 100%;
+}
+
+main > #controlpanel {
+    flex-basis: 500px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border: solid 1px grey;
+}
+
+main > #vispanel {
+    border: solid 1px grey;
+    flex-basis: 700px;
+    flex-grow: 1;
+}
+
+

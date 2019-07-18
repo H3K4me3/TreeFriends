@@ -6,11 +6,38 @@ class TreeVis {
         this.query_param = null;
     }
 
-    tree_data() {
-        let TREE_STR = "((((hg:6.4[&&NHX:dist=6.4:name=hg:support=1.0],panTro:6.4[&&NHX:dist=6.4:name=panTro:support=1.0])1:2.21[&&NHX:dist=2.21:name=ancestry1:support=1.0],gorGor:8.61[&&NHX:dist=8.61:name=gorGor:support=1.0])1:6.59[&&NHX:dist=6.59:name=ancestry2:support=1.0],ponAbe:15.2[&&NHX:dist=15.2:name=ponAbe:support=1.0])1:12.9[&&NHX:dist=12.9:name=ancestry3:support=1.0],rheMac:28.1[&&NHX:dist=28.1:name=rheMac:support=1.0]);";
-        let TREE_OBJ = tnt.tree.parse_nhx(TREE_STR);
-        TREE_OBJ.name = "ancestry4";
-        return TREE_OBJ;
+    async tree_data() {
+        let query_param = this.query_param;
+        if (query_param === null)
+            console.error("query_param has not been set");
+        let chromosome = query_param.chromosome;
+        let position = query_param.position;
+
+        // Skeleton
+        let tree_str = "((((hg:6.4[&&NHX:dist=6.4:name=hg:support=1.0],panTro:6.4[&&NHX:dist=6.4:name=panTro:support=1.0])1:2.21[&&NHX:dist=2.21:name=ancestry1:support=1.0],gorGor:8.61[&&NHX:dist=8.61:name=gorGor:support=1.0])1:6.59[&&NHX:dist=6.59:name=ancestry2:support=1.0],ponAbe:15.2[&&NHX:dist=15.2:name=ponAbe:support=1.0])1:12.9[&&NHX:dist=12.9:name=ancestry3:support=1.0],rheMac:28.1[&&NHX:dist=28.1:name=rheMac:support=1.0]);";
+        let tree_obj = tnt.tree.parse_nhx(tree_str);
+        tree_obj.name = "ancestry4";
+
+        // Fetch data
+        let rest_url = `/snp/${chromosome}/${position}`;
+        let res = await fetch(rest_url);
+        if (!res.ok)
+            console.error("fetching data failed", res);
+        res = await res.json();
+
+        // Combine them
+        function walk(node, callback) {
+            callback(node);
+            if (node.children !== undefined && node.children.length)
+                node.children.forEach(d => walk(d, callback));
+            return;
+        }
+        walk(tree_obj, n => {
+            n.allele = res[n.name];
+            n.allele_array = TreeVis.iupac_code(n.allele);
+        });
+
+        return tree_obj;
     }
 
     set_snp(chromosome, position) {
@@ -19,7 +46,27 @@ class TreeVis {
             position: position
         };
     }
-
+    static iupac_code(code) {
+        let map = {
+            a: ["a"],
+            c: ["c"],
+            g: ["g"],
+            t: ["t"],
+            m: ["a", "c"],
+            r: ["a", "g"],
+            w: ["a", "t"],
+            s: ["c", "g"],
+            y: ["c", "t"],
+            k: ["g", "t"],
+            v: ["a", "c", "g"],
+            h: ["a", "c", "t"],
+            d: ["a", "g", "t"],
+            b: ["c", "g", "t"],
+            n: ["a", "c", "g", "t"],
+            "-": ["a", "c", "g", "t"], // Not sure if we should have this
+        };
+        return map[code];
+    }
     static atcg_node_display() {
         let n = tnt.tree.node_display();
 
@@ -48,7 +95,7 @@ class TreeVis {
         let tree = this.tree;
         // TODO: fetch the data
 
-        let data = this.tree_data();
+        let data = await this.tree_data();
 
         let atcg_node = TreeVis.atcg_node_display()
             .size(14)
@@ -68,7 +115,12 @@ class TreeVis {
 
         let label = tnt.tree.label.text()
             .fontsize(12)
-            .height(24);
+            .height(24)
+            .text(function(node) {
+                let alleles = node.data().allele_array.join(",");
+                let ans = node.data().name + ` (${alleles})`;
+                return ans;
+            });
 
         tree.data(data);
         tree.node_display(node_display);

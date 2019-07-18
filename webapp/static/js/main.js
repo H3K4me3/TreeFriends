@@ -81,8 +81,18 @@ class TreeVis {
 }
 
 async function main() {
+
+    let currenturl = new URL(window.location);
+    let chromosome = currenturl.searchParams.get("chromosome");
+    let position = currenturl.searchParams.get("position");
+
+    if (chromosome === null || position === null)
+        return;
+    position = parseInt(position);
+
     let treevis = new TreeVis("#tree-container");
-    treevis.set_snp("chr8", 623323);
+    treevis.set_snp(chromosome, position);
     await treevis.load();
 }
+
 main();

@@ -3,7 +3,8 @@ import sqlite3
 class SNPDB:
     conn = None
     def __init__(self, dbpath):
-        self.conn = sqlite3.connect(dbpath)
+        ## Use check_same_thread=False -- we do not have writing operations
+        self.conn = sqlite3.connect(dbpath, check_same_thread=False)
         self.register_expected_REF_AC()
         self.createview_suspicious_stat()
         self.createview_tree_nodes()

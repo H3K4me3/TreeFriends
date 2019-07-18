@@ -19,21 +19,47 @@ class TreeVis {
             position: position
         };
     }
+
+    static atcg_node_display() {
+        let n = tnt.tree.node_display();
+
+        n.display (function (node) {
+    	      d3v5.select(this)
+                .append("circle")
+                .attr("r", function (d) {
+                    return d3.functor(n.size())(node);
+                })
+                .attr("fill", function (d) {
+                    return d3.functor(n.fill())(node);
+                })
+                .attr("stroke", function (d) {
+                    return d3.functor(n.stroke())(node);
+                })
+                .attr("stroke-width", function (d) {
+                    return d3.functor(n.stroke_width())(node);
+                })
+                .attr("class", "tnt_node_display_elem");
+        });
+
+        return n;
+    }
+
     async load() {
         let tree = this.tree;
         // TODO: fetch the data
 
         let data = this.tree_data();
 
-        let circle_node = tnt.tree.node_display.circle()
-            .size(14) // This is used only for the circle display
+        let atcg_node = TreeVis.atcg_node_display()
+            .size(14)
             .fill("lightgrey")
             .stroke("black");
 
         let node_display = tnt.tree.node_display()
             .size(40) // This is used for the layout calculation
             .display (function (node) {
-                circle_node.display().call(this, node);
+                console.log(node.data());
+                atcg_node.display().call(this, node);
             });
 
         let layout = tnt.tree.layout.vertical()

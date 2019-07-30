@@ -19,6 +19,7 @@ main > #vispanel {
     border: solid 1px grey;
     flex-basis: 700px;
     flex-grow: 1;
+    padding: 30px;
 }
 
 

@@ -24,6 +24,8 @@ class TreeVis {
         if (!res.ok)
             console.error("fetching data failed", res);
         res = await res.json();
+        if (res === null)
+            return res;
 
         // Combine them
         function walk(node, callback) {
@@ -95,6 +97,14 @@ class TreeVis {
         let tree = this.tree;
 
         let data = await this.tree_data();
+        let chromosome = this.query_param.chromosome;
+        let position = this.query_param.position;
+
+        if (data === null) {
+            this.dom.innerHTML = `<div class="alert alert-warning" role="alert">
+                Data not found for ${chromosome}:${position} </div>`;
+            return;
+        }
 
         let atcg_node = TreeVis.atcg_node_display()
             .size(14)
@@ -131,19 +141,3 @@ class TreeVis {
     }
 }
 
-async function main() {
-
-    let currenturl = new URL(window.location);
-    let chromosome = currenturl.searchParams.get("chromosome");
-    let position = currenturl.searchParams.get("position");
-
-    if (chromosome === null || position === null)
-        return;
-    position = parseInt(position);
-
-    let treevis = new TreeVis("#tree-container");
-    treevis.set_snp(chromosome, position);
-    await treevis.load();
-}
-
-main();

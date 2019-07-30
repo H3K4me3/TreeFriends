@@ -3,6 +3,8 @@ import os
 import sys
 from flask import Flask
 from flask import jsonify
+from flask import request
+from flask import render_template
 
 #### Import lib/snpdb.py
 
@@ -22,12 +24,17 @@ app = Flask(__name__,
             static_folder = os.path.join(PROJECT_ROOT, "webapp/static"))
 
 @app.route('/')
-def root():
-     return app.send_static_file('index.html')
+def application():
+    chromosome = request.args.get('chromosome')
+    position = request.args.get('position')
 
+    chromosome = chromosome if chromosome is None else str(chromosome)
+    position = position if position is None else int(position)
+
+    return render_template("application.html", chromosome=chromosome, position=position)
+
+## A restful API
 @app.route('/snp/<chromosome>/<int:position>')
 def get_snp(chromosome, position):
     res = db.get_snp(chromosome, position)
     return jsonify(res)
-
-

@@ -1,3 +1,4 @@
+'use strict';
 
 class TreeVis {
     constructor(dom) {
@@ -66,30 +67,52 @@ class TreeVis {
             b: ["c", "g", "t"],
             n: ["a", "c", "g", "t"],
             "-": ["a", "c", "g", "t"], // Not sure if we should have this
+            // I think "n" and "-" should be treated equivalently.
+            // "n" is the rare case in the database.
         };
         return map[code];
     }
+
+    // Color scale from http://biomodel.uah.es/en/model4/dna/atgc.htm
+    static atcg_color_scale() {
+        if (this._atcg_color_scale === undefined) {
+            this._atcg_color_scale = d3v5.scaleOrdinal()
+                .domain(["a", "t", "c", "g", "default"])
+                .range(["#5050ff", "#e6e600", "#e00000", "#00c000", "grey"]);
+        }
+        return this._atcg_color_scale;
+    }
+
     static atcg_node_display() {
         let n = tnt.tree.node_display();
-
-        n.display (function (node) {
-    	      d3v5.select(this)
+        n.display(function(node) {
+            // Background
+            d3v5.select(this)
                 .append("circle")
-                .attr("r", function (d) {
-                    return d3.functor(n.size())(node);
-                })
-                .attr("fill", function (d) {
-                    return d3.functor(n.fill())(node);
-                })
-                .attr("stroke", function (d) {
-                    return d3.functor(n.stroke())(node);
-                })
-                .attr("stroke-width", function (d) {
-                    return d3.functor(n.stroke_width())(node);
-                })
+                .attr("r",            d3.functor(n.size())(node))
+                .attr("fill",         d3.functor(n.fill())(node))
+                .attr("stroke",       d3.functor(n.stroke())(node))
+                .attr("stroke-width", d3.functor(n.stroke_width())(node))
+                .attr("class", "tnt_node_display_elem");
+
+            let data = d3v5.select(this).datum();
+            let allele = data.allele;
+            let allele_data = {a: 0, t: 0, c: 0, g: 0, default: 0};
+            data.allele_array.forEach(d => {
+                allele_data[d] = 1;
+            });
+            allele_data = d3v5.entries(allele_data);
+            let pie_data = d3v5.pie().value(d => d.value)(allele_data);
+            d3v5.select(this)
+                .selectAll("path")
+                .data(pie_data)
+                .enter()
+                .append("path")
+                .attr("d", d3v5.arc().innerRadius(0).outerRadius(d3.functor(n.size())(node)))
+                //.attr("stroke", "black");
+                .attr("fill", d => TreeVis.atcg_color_scale()(d.data.key))
                 .attr("class", "tnt_node_display_elem");
         });
-
         return n;
     }
 
@@ -107,14 +130,13 @@ class TreeVis {
         }
 
         let atcg_node = TreeVis.atcg_node_display()
-            .size(14)
+            .size(15)
             .fill("lightgrey")
             .stroke("black");
 
         let node_display = tnt.tree.node_display()
             .size(40) // This is used for the layout calculation
             .display (function (node) {
-                console.log(node.data());
                 atcg_node.display().call(this, node);
             });
 

@@ -164,3 +164,38 @@ class TreeVis {
     }
 }
 
+
+// class EnsemblAPI {
+//     //https://rest.ensembl.org/variation/human/rs56116432?content-type=application/json
+//     constructor() {
+//     }
+//     static async get_rsid(rsid) {
+//         let url = new URL("https://rest.ensembl.org/");
+//         url.pathname = "variation/human/" + rsid;
+//         url.searchParams.set("content-type", "application/json");
+//         let res = await fetch(url);
+//         if (!res.ok)
+//             console.log("Fetching RSID failed", res);
+//         res = await res.json();
+//         return res;
+//     }
+// }
+
+// async function onsubmit_rsid(event) {
+//     event.preventDefault();
+//     let form = new FormData(event.target);
+//     let rsid = form.get("rsid");
+//     let ensemblapi = new EnsemblAPI();
+//     let res = await EnsemblAPI.get_rsid(rsid);
+//     console.log(res);
+//     return false;
+// }
+
+// <form onsubmit="return onsubmit_rsid(event)">
+//     <div class="form-group">
+//         <label for="rsidinput">RSID</label>
+//         <input class="form-control" type="text" id="rsidinput" name="rsid" required>
+//     </div>
+//
+//     <button type="submit" class="btn btn-primary">Submit</button>
+// </form>

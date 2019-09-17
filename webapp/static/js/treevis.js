@@ -48,6 +48,7 @@ class TreeVis {
             chromosome: chromosome,
             position: position
         };
+        return this;
     }
     static iupac_code(code) {
         let map = {

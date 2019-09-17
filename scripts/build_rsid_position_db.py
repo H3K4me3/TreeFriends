@@ -1,5 +1,6 @@
 
 import os
+import sys
 import subprocess
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -14,7 +15,7 @@ def download_csv():
     if os.path.exists(CSV_FILE):
         os.remove(CSV_FILE)
     csv_file = open(CSV_FILE, "w")
-    proc = subprocess.Popen(SH_CMD, shell=True, stdout=csv_file, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(SH_CMD, shell=True, stdout=csv_file, stderr=sys.stderr)
     proc.wait()
     if proc.returncode > 0:
         print("===== Download process failed with code {} =====".format(proc.returncode))

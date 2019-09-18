@@ -25,42 +25,24 @@ def download_csv():
     else:
         print("===== File downloaded to {} =====".format(CSV_FILE))
 
-sql = """
-    drop table if exists rsid_position;
-    create table rsid_position(seqnames TEXT, start INT, rsid TEXT);
-    .mode csv
-    .import rsid_position.csv rsid_position
-"""
-
 def csv_iter():
     with open(CSV_FILE, "r") as csv_file:
         for line in csv_file:
             seqnames, start, rsid = line.rstrip().split(",")
+            rsid_num = int(rsid[2:])
             start = int(start)
-            yield seqnames, start, rsid
+            yield rsid_num, seqnames, start
 
 def insert_csv_to_db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        " drop index if exists rsid_position_idx_byposition "
-    )
-    conn.execute(
-        " drop index if exists rsid_position_idx_byrsid "
-    )
-    conn.execute(
         " drop table if exists rsid_position "
     )
     conn.execute(
-        " create table rsid_position(seqnames TEXT, start INT, rsid TEXT) "
+        " create table rsid_position(rsid_num INT PRIMARY KEY, seqnames TEXT, start INT) "
     )
     conn.executemany(
-        " INSERT INTO rsid_position(seqnames, start, rsid) VALUES (?, ?, ?) ", csv_iter()
-    )
-    conn.execute(
-        " CREATE UNIQUE INDEX rsid_position_idx_byposition ON rsid_position(seqnames, start) "
-    )
-    conn.execute(
-        " CREATE UNIQUE INDEX rsid_position_idx_byrsid ON rsid_position(rsid) "
+        " INSERT INTO rsid_position(rsid_num, seqnames, start) VALUES (?, ?, ?) ", csv_iter()
     )
     conn.commit()
     conn.close()

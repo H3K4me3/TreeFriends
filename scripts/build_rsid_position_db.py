@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import sqlite3
+from datetime import datetime
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 PROJECT_ROOT = os.path.join(SCRIPT_DIR, "..")
@@ -27,10 +28,14 @@ def download_csv():
 
 def csv_iter():
     with open(CSV_FILE, "r") as csv_file:
+        line_count = 0
         for line in csv_file:
             seqnames, start, rsid = line.rstrip().split(",")
             rsid_num = int(rsid[2:])
             start = int(start)
+            if line_count % 100000:
+                print("rs{}\t{}\t{}\t{}".format(rsid_num, seqnames, start, datetime.now().ctime()))
+            line_count += 1
             yield rsid_num, seqnames, start
 
 def insert_csv_to_db():

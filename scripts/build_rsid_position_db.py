@@ -36,13 +36,19 @@ def csv_iter():
 def insert_csv_to_db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
+        " drop index if exists idx_rsid_position_on_rsid_num "
+    )
+    conn.execute(
         " drop table if exists rsid_position "
     )
     conn.execute(
-        " create table rsid_position(rsid_num INT PRIMARY KEY, seqnames TEXT, start INT) "
+        " create table rsid_position(rsid_num INT, seqnames TEXT, start INT) "
     )
     conn.executemany(
         " INSERT INTO rsid_position(rsid_num, seqnames, start) VALUES (?, ?, ?) ", csv_iter()
+    )
+    conn.execute(
+        " CREATE UNIQUE INDEX idx_rsid_position_on_rsid_num ON rsid_position(rsid_num) "
     )
     conn.commit()
     conn.close()

@@ -33,8 +33,8 @@ def csv_iter():
             seqnames, start, rsid = line.rstrip().split(",")
             rsid_num = int(rsid[2:])
             start = int(start)
-            if line_count % 100000:
-                print("rs{}\t{}\t{}\t{}".format(rsid_num, seqnames, start, datetime.now().ctime()))
+            if line_count % 10000000:
+                print("{}\trs{}\t{}\t{}\t{}".format(line_count, rsid_num, seqnames, start, datetime.now().ctime()))
             line_count += 1
             yield rsid_num, seqnames, start
 

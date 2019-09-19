@@ -53,7 +53,8 @@ def insert_csv_to_db():
         " INSERT INTO rsid_position(rsid_num, seqnames, start) VALUES (?, ?, ?) ", csv_iter()
     )
     conn.execute(
-        " CREATE UNIQUE INDEX idx_rsid_position_on_rsid_num ON rsid_position(rsid_num) "
+        # Non-unique index
+        " CREATE INDEX idx_rsid_position_on_rsid_num ON rsid_position(rsid_num) "
     )
     conn.commit()
     conn.close()

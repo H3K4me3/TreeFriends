@@ -104,8 +104,67 @@ class SNPDB:
         if res is None:
             return None
         return dict(res)
+    
+    def get_snp_batch(self, coordinates):
+        cursor = self.conn.cursor()
+        cursor.row_factory = sqlite3.Row
+        for chromosome, position in coordinates:
+            cursor.execute(
+                """
+                WITH loc(chromosome, position) AS (VALUES(?, ?))
+                SELECT * FROM loc LEFT JOIN tree_nodes ON
+                    loc.chromosome=tree_nodes.chromosome AND loc.position=tree_nodes.position
+                """,
+                (chromosome, position)
+            )
+            res = cursor.fetchone()
+            if cursor.fetchone() is not None:
+                raise Exception("Unexpected: there should be only one row")
+            yield dict(res)
+    
+    def get_rsidnum_batch(self, rsidnum):
+        allowed_chromosome = ["chr" + str(i) for i in range(1,23)]
+        allowed_chromosome.append("chrX")
+        cursor = self.conn.cursor()
+        cursor.row_factory = sqlite3.Row
+        sql = """
+        WITH
+            query_rsid_num(rsid_num) AS (VALUES(?)),
+            rsid_position_res AS (
+                SELECT
+                    printf('rs%d', query_rsid_num.rsid_num) AS rsid,
+                    seqnames AS chromosome,
+                    start AS position
+                FROM
+                    query_rsid_num
+                LEFT JOIN
+                    rsid_position
+                ON
+                    query_rsid_num.rsid_num=rsid_position.rsid_num
+            ),
+            final_res AS (
+                SELECT *
+                FROM
+                    rsid_position_res
+                LEFT JOIN
+                    tree_nodes
+                ON
+                    rsid_position_res.chromosome=tree_nodes.chromosome AND
+                    rsid_position_res.position=tree_nodes.position
+            )
 
-
-
-
+        SELECT * FROM final_res WHERE chromosome IN ({}) OR chromosome IS NULL
+        """.format(",".join(map(lambda x: "'{}'".format(x), allowed_chromosome)))
+        for id in rsidnum:
+            cursor.execute(sql, (id,))
+            res = cursor.fetchall()
+            if len(res) == 1:
+                yield dict(res[0])
+            else:
+                res = [ each for each in res if each['ref'] is not None ]
+                if len(res) != 1:
+                    raise Exception("Something unexpected happened with rs{}".format(id))
+                yield dict(res[0])
+            
+        
 

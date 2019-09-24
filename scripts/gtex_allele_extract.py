@@ -29,7 +29,7 @@ def read_gtex_file():
             rsid_num = re.sub("rs", "", rsid)
             yield rsid_num
 
-RES_FILE = os.join.path(PROJECT_ROOT, "results/GTEx_v7_Binaryfile_4919_ancestral_allele.txt")
+RES_FILE = os.path.join(PROJECT_ROOT, "results/GTEx_v7_Binaryfile_4919_ancestral_allele.txt")
 
 def main():
     res_file = open(RES_FILE, "w")

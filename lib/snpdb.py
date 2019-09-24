@@ -127,6 +127,8 @@ class SNPDB:
     def get_rsidnum_batch(self, rsidnum):
         allowed_chromosome = ["chr" + str(i) for i in range(1,23)]
         allowed_chromosome.append("chrX")
+        allowed_chromosome.append("chrY") ## But there is no record
+        allowed_chromosome.append(None) ## But there is no record
         cursor = self.conn.cursor()
         cursor.row_factory = sqlite3.Row
         sql = """
@@ -172,6 +174,13 @@ class SNPDB:
             if len(filtered_res) == 1:
                 yield filtered_res[0]
                 continue
+            ## All of the chromosomes are not-standard nor None, in this case just random pick one
+            if len(filtered_res) == 0:
+                print("======= rsid with all results on non-standard chromosomes (rs{})".format(id))
+                for each in res:
+                    print(dict(each))
+                yield res[0]
+                continue
             if len(filtered_res) > 1:
                 filtered_res = list(filter(lambda x: x['ref'] is not None, filtered_res))
                 if len(filtered_res) == 1:
@@ -183,6 +192,3 @@ class SNPDB:
                 print(dict(each))
             print("===== Error reporting End ======")
             raise Exception("Something unexpected happened with rs{}".format(id))
-            
-        
-

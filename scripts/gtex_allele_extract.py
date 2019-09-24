@@ -38,6 +38,7 @@ def main():
         if firstline:
             res_file.write("\t".join(row.keys()))
             res_file.write("\n")
+            firstline = False
         line = (str(v) if v is not None else "NA" for v in tuple(row))
         line = "\t".join(line)
         res_file.write(line)

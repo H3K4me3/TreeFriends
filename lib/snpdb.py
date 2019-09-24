@@ -159,18 +159,30 @@ class SNPDB:
                     (chromosome, position)
             )
 
-        SELECT * FROM final_res WHERE chromosome IN ({}) OR chromosome IS NULL
+        SELECT * FROM final_res /* WHERE chromosome IN ({}) OR chromosome IS NULL */
         """.format(",".join(map(lambda x: "'{}'".format(x), allowed_chromosome)))
         for id in rsidnum:
             cursor.execute(sql, (id,))
             res = cursor.fetchall()
             if len(res) == 1:
                 yield res[0]
-            else:
-                res = [ each for each in res if each['ref'] is not None ]
-                if len(res) != 1:
-                    raise Exception("Something unexpected happened with rs{}".format(id))
-                yield res[0]
+                continue
+            ## First try to remove non-standard chromosomes
+            filtered_res = list(filter(lambda x: x['chromosome'] in allowed_chromosome, res))
+            if len(filtered_res) == 1:
+                yield filtered_res[0]
+                continue
+            if len(filtered_res) > 1:
+                filtered_res = list(filter(lambda x: x['ref'] is not None, filtered_res))
+                if len(filtered_res) == 1:
+                    yield filtered_res[0]
+                    continue
+            print("===== Error reporting ======")
+            print("Unfiltered res:")
+            for each in res:
+                print(dict(each))
+            print("===== Error reporting End ======")
+            raise Exception("Something unexpected happened with rs{}".format(id))
             
         
 

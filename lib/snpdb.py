@@ -112,15 +112,17 @@ class SNPDB:
             cursor.execute(
                 """
                 WITH loc(chromosome, position) AS (VALUES(?, ?))
-                SELECT * FROM loc LEFT JOIN tree_nodes ON
-                    loc.chromosome=tree_nodes.chromosome AND loc.position=tree_nodes.position
+                SELECT * FROM loc LEFT JOIN tree_nodes
+                USING (chromosome, position)
+
+                /* ON loc.chromosome=tree_nodes.chromosome AND loc.position=tree_nodes.position */
                 """,
                 (chromosome, position)
             )
             res = cursor.fetchone()
             if cursor.fetchone() is not None:
                 raise Exception("Unexpected: there should be only one row")
-            yield dict(res)
+            yield res
     
     def get_rsidnum_batch(self, rsidnum):
         allowed_chromosome = ["chr" + str(i) for i in range(1,23)]
@@ -148,9 +150,13 @@ class SNPDB:
                     rsid_position_res
                 LEFT JOIN
                     tree_nodes
+                /*
                 ON
                     rsid_position_res.chromosome=tree_nodes.chromosome AND
                     rsid_position_res.position=tree_nodes.position
+                */
+                USING
+                    (chromosome, position)
             )
 
         SELECT * FROM final_res WHERE chromosome IN ({}) OR chromosome IS NULL
@@ -159,12 +165,12 @@ class SNPDB:
             cursor.execute(sql, (id,))
             res = cursor.fetchall()
             if len(res) == 1:
-                yield dict(res[0])
+                yield res[0]
             else:
                 res = [ each for each in res if each['ref'] is not None ]
                 if len(res) != 1:
                     raise Exception("Something unexpected happened with rs{}".format(id))
-                yield dict(res[0])
+                yield res[0]
             
         
 

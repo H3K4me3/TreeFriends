@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import itertools
 
 try:
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -19,19 +21,31 @@ db = SNPDB(DB_PATH)
 
 GTEx_FILE = os.path.join(PROJECT_ROOT, "raw_data/GTEx_v7_Binaryfile_4919.txt")
 
-#def read_gtex_file():
-with open(GTEx_FILE, "r", newline="") as gtex_file:
-    gtex_file
-    #for line in gtex_file:
+def read_gtex_file():
+    with open(GTEx_FILE, "r", newline="") as gtex_file:
+        headers = next(gtex_file).split()
+        for line in gtex_file:
+            rsid = line.split()[0]
+            rsid_num = re.sub("rs", "", rsid)
+            yield rsid_num
 
+RES_FILE = os.join.path(PROJECT_ROOT, "results/GTEx_v7_Binaryfile_4919_ancestral_allele.txt")
 
-print("====")
-list(db.get_snp_batch([("chr2", 43)]))
-print("====")
-list(db.get_snp_batch([("chr10", 10190)]))
+def main():
+    res_file = open(RES_FILE, "w")
+    firstline = True
+    for row in db.get_rsidnum_batch(read_gtex_file()):
+        if firstline:
+            res_file.write("\t".join(row.keys()))
+            res_file.write("\n")
+        line = (str(v) if v is not None else "NA" for v in tuple(row))
+        line = "\t".join(line)
+        res_file.write(line)
+        res_file.write("\n")
 
-print("""\n\n\n""")
-for each in db.get_rsidnum_batch([1,2,3]):
-    print("=======")
-    print(each)
+if __name__ == "__main__":
+    main()
+
+# for each in db.get_rsidnum_batch(itertools.islice(read_gtex_file(), 10)):
+#     print(each)
 

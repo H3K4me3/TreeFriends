@@ -50,6 +50,9 @@ EdgeTuple = _namedtuple("EdgeTuple", [ "_".join(edge_a_b) for edge_a_b in EDGE_L
 NodeTuple = _namedtuple("NodeTuple", ['hg', 'panTro', 'gorGor', 'ponAbe', 'rheMac',
                                       'ancestry1', 'ancestry2', 'ancestry3', 'ancestry4'])
 
+def mkNodeTuple(res):
+    return NodeTuple._make((res[k] for k in NodeTuple._fields))
+
 def specialize_ambiguous_changes(nodes):
     """
     Sample nodes argument could be

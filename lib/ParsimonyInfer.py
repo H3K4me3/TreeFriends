@@ -98,6 +98,7 @@ def _calculate_num_changes(tree):
     s = (int(tree[a]!=tree[b]) for a, b in EDGE_LIST)
     return EdgeTuple._make(s)
 
+@_functools.lru_cache(maxsize=None)
 def stat_edge_changes(nodes):
     trees = specialize_ambiguous_changes(nodes)
     change_tuples = [ _calculate_num_changes(tree) for tree in trees]

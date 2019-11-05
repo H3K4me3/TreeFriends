@@ -36,7 +36,6 @@ def main():
     res_file = open(RES_FILE, "w")
     firstline = True
     for row in db.get_rsidnum_batch(read_gtex_file()):
-        change_stat = ParsimonyInfer.stat_edge_changes(ParsimonyInfer.mkNodeTuple(row))
         assert isinstance(change_stat, ParsimonyInfer.EdgeTuple)
         if firstline:
             res_file.write("\t".join(row.keys()))
@@ -48,7 +47,12 @@ def main():
         line = "\t".join(line)
         res_file.write(line)
         res_file.write("\t")
-        res_file.write("\t".join((str(x) for x in change_stat)))
+        is_na_line = row['hg'] is None
+        if is_na_line:
+            res_file.write("\t".join(("NA" for i in ParsimonyInfer.NodeTuple._fields)))
+        else:
+            change_stat = ParsimonyInfer.stat_edge_changes(ParsimonyInfer.mkNodeTuple(row))
+            res_file.write("\t".join((str(x) for x in change_stat)))
         res_file.write("\n")
 
 if __name__ == "__main__":

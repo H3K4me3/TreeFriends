@@ -6,7 +6,7 @@ import numpy as _np
 def _new_cost_matrix(ratio):
     levels = ["a", "c", "g", "t"]
     transversion_cost = ratio
-    ans = {key:transversion_cost for key in _itertools.combinations_with_replacement(levels, 2)}
+    ans = {key:transversion_cost for key in _itertools.product(levels, levels)}
     for level in levels:
         ans[(level, level)] = 0
     transitions = [("a", "g"), ("g", "a"), ("c", "t"), ("t", "c")]

@@ -15,6 +15,7 @@ else:
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "lib"))
 
 from snpdb import SNPDB
+import ParsimonyInfer
 
 DB_PATH = os.path.join(PROJECT_ROOT, "results/snpdb.sqlite3")
 db = SNPDB(DB_PATH)
@@ -37,4 +38,13 @@ def application():
 @app.route('/snp/<chromosome>/<int:position>')
 def get_snp(chromosome, position):
     res = db.get_snp(chromosome, position)
-    return jsonify(res)
+    if res is None:
+        return jsonify(res)
+    assert isinstance(res, dict)
+    edge_changes = ParsimonyInfer.stat_edge_changes(ParsimonyInfer.mkNodeTuple(res))
+    edge_changes = edge_changes._asdict()
+    merged = {**res}
+    merged['edge_changes'] = edge_changes
+    return jsonify(merged)
+
+

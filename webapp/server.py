@@ -43,7 +43,8 @@ def get_snp(chromosome, position):
     assert isinstance(res, dict)
     edge_changes = ParsimonyInfer.stat_edge_changes(ParsimonyInfer.mkNodeTuple(res))
     edge_changes = edge_changes._asdict()
-    merged = {**res}
+    merged = dict()
+    merged['results'] = res
     merged['edge_changes'] = edge_changes
     return jsonify(merged)
 

@@ -27,6 +27,8 @@ class TreeVis {
         res = await res.json();
         if (res === null)
             return res;
+        let results = res.results;
+        let edge_changes = res.edge_changes;
 
         // Combine them
         function walk(node, callback) {
@@ -36,7 +38,7 @@ class TreeVis {
             return;
         }
         walk(tree_obj, n => {
-            n.allele = res[n.name];
+            n.allele = results[n.name];
             n.allele_array = TreeVis.iupac_code(n.allele);
         });
 

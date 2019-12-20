@@ -74,6 +74,9 @@
 
     <script>
      async function main() {
+         const data = {{ data | tojson }};
+         console.log(data);
+
          const chromosome = {{ chromosome | tojson }};
          const position = {{ position | tojson }};
          if (chromosome === null || position === null) {

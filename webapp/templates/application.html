@@ -74,17 +74,17 @@
 
     <script>
      async function main() {
-         const data = {{ data | tojson }};
-         console.log(data);
-
          const chromosome = {{ chromosome | tojson }};
          const position = {{ position | tojson }};
+         const data = {{ data | tojson }};
+
+         console.log(data);
+
          if (chromosome === null || position === null) {
              return;
          }
-         const treevis = new TreeVis("#tree-container");
-         treevis.set_snp(chromosome, position);
-         await treevis.load();
+         let treevis = new AncTreeVis(chromosome, position, data);
+         treevis("#tree-container");
      }
      main();
     </script>

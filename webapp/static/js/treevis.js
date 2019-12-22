@@ -3,6 +3,7 @@
 function AncTreeVis(chromosome, position, response) {
     let tree = tnt.tree();
     let treedata = AncTreeVis.process_tree_data(response);
+    let edge_changes = response.edge_changes;
     console.log("treedata", treedata)
 
     let draw = function(dom) {
@@ -39,6 +40,48 @@ function AncTreeVis(chromosome, position, response) {
         tree.label(label);
 
         tree(dom);
+
+        // Ad hoc, draw edge labels
+        let edge_sel = d3v5.select(dom).selectAll("path.tnt_tree_link");
+        let edge_srcdat = edge_sel.data();
+        // Restyle edge stroke width
+        edge_sel.attr("stroke-width", (dat) => {
+            let key = dat.source.name + "_" + dat.target.name;
+            let n_change = edge_changes[key];
+            return n_change + 1;
+        })
+        let svg_sel = d3v5.select(dom).select("svg");
+        //svg_sel.selectAll("text.mytnt_edge_label")
+        svg_sel.select("g")
+            .append("g")
+            .attr("class", "mytnt")
+            .selectAll("text.mytnt_edge_label")
+            .data(edge_srcdat)
+            .enter()
+            .append("text")
+            .attr("class", "mytnt_edge_label")
+            .attr("fill", dat => {
+                if (edge_changes[dat.source.name + "_" + dat.target.name] <= 0)
+                    return "grey";
+                else
+                    return "black"
+            })
+            .attr("font-size", 13)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .attr("y", dat => {
+                let x1 = dat.source.x;
+                let x2 = dat.target.x;
+                return x1 + (x2-x1)*3/4;
+            })
+            .attr("x", dat => {
+                let y1 = dat.source.y;
+                let y2 = dat.target.y;
+                return (y1 + y2)/2;
+            })
+            .text(dat => {
+                return edge_changes[dat.source.name + "_" + dat.target.name];
+            })
     };
     return draw;
 }

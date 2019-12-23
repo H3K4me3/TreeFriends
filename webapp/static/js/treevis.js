@@ -82,18 +82,16 @@ function AncTreeVis(chromosome, position, response) {
             .text(dat => {
                 return edge_changes[dat.source.name + "_" + dat.target.name];
             })
+        AncTreeVis.draw_legend(svg_sel);
     };
     return draw;
 }
 
 // Color scale from http://biomodel.uah.es/en/model4/dna/atgc.htm
 AncTreeVis.atcg_color_scale = function() {
-    if (this._atcg_color_scale === undefined) {
-        this._atcg_color_scale = d3v5.scaleOrdinal()
-            .domain(["a", "t", "c", "g", "default"])
-            .range(["#5050ff", "#e6e600", "#e00000", "#00c000", "grey"]);
-    }
-    return this._atcg_color_scale;
+    return d3v5.scaleOrdinal()
+        .domain(["a", "t", "c", "g", "default"])
+        .range(["#5050ff", "#e6e600", "#e00000", "#00c000", "grey"]);
 }
 
 AncTreeVis.iupac_code = function(code) {
@@ -176,6 +174,34 @@ AncTreeVis.atcg_node_display = function() {
             .attr("class", "tnt_node_display_elem");
     });
     return n;
+}
+
+AncTreeVis.draw_legend = function(svg) {
+    //svg = d3v5.select(svg);
+    let g_atcg_sel = svg.selectAll("g.atcg_legend")
+        .data(["a", "t", "c", "g"])
+        .enter()
+        .append("g")
+        .attr("class", "atcg_legend")
+        .attr("transform", (code, idx) => {
+            //`translate(${}, ${})`
+            let height_block = 33;
+            let y = 20 + idx * height_block;
+            let x = 20;
+            return `translate(${x}, ${y})`;
+        });
+    g_atcg_sel
+        .append("circle")
+        .attr("fill", d => AncTreeVis.atcg_color_scale()(d))
+        .attr("r", 15)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1);
+    g_atcg_sel
+        .append("text")
+        .attr("dominant-baseline", "central")
+        .attr("x", 20)
+        .attr("fill", "black")
+        .text(d => d.toUpperCase())
 }
 
 // class EnsemblAPI {

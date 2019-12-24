@@ -45,10 +45,33 @@
         <div id="controlpanel">
             <h4>Find SNP by position or rsid</h4>
             <form method="get">
+
                 <div class="form-group">
                     <label for="chromosomeinput">Chromosome</label>
                     <select class="form-control" id="chromosomeinput" name="chromosome">
-                        <option>chr8</option>
+                        <option>chr1 </option>
+                        <option>chr2 </option>
+                        <option>chr3 </option>
+                        <option>chr4 </option>
+                        <option>chr5 </option>
+                        <option>chr6 </option>
+                        <option>chr7 </option>
+                        <option>chr8 </option>
+                        <option>chr9 </option>
+                        <option>chr10</option>
+                        <option>chr11</option>
+                        <option>chr12</option>
+                        <option>chr13</option>
+                        <option>chr14</option>
+                        <option>chr15</option>
+                        <option>chr16</option>
+                        <option>chr17</option>
+                        <option>chr18</option>
+                        <option>chr19</option>
+                        <option>chr20</option>
+                        <option>chr21</option>
+                        <option>chr22</option>
+                        <option>chrX </option>
                     </select>
 
                 </div>
@@ -59,11 +82,38 @@
 
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
+            <hr>
+            <form method="get">
+                <div class="form-group">
+                    <label for="rsidinput">rs number</label>
+                    <input class="form-control" type="number" id="rsidinput" name="rsid" min="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
         </div>
         <div id="vispanel">
             <div id="meta-container">
-                <h5>{{ chromosome }}:{{ position }}</h5>
+                {% if rsid_num is none %}
+                    {% if data is none %}
+                    <h5>{{ chromosome }}:{{ position }} Not found</h5>
+                    {% else %}
+                    <h5>{{ chromosome }}:{{ position }}</h5>
+                    {% endif %}
+                {% else %}
+                <h5>
+                    <span>rs{{ rsid_num }}</span>
+                    <span>
+                        {% if data['found'] %}
+                        {{ chromosome }}:{{ position }}
+                        {% else %}
+                        Not found
+                        {% endif %}
+                    </span>
+                </h5>
+                {% endif %}
             </div>
+
+
             <hr>
             <div id="tree-container">
             </div>
